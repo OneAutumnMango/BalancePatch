@@ -205,7 +205,19 @@ public static class Patch_RocketObject_Awake_SetStartTime
 
     static void Postfix(RocketObject __instance)
     {
-        StartTimeRef(__instance) = 1.5f;
+        StartTimeRef(__instance) = 1.2f;
+    }
+}
+
+[HarmonyPatch(typeof(TetherballObject), "Init")]
+public static class Patch_TetherballObject_Init_SetStartTime
+{
+    static readonly AccessTools.FieldRef<SpellObject, float> StartTimeRef =
+        AccessTools.FieldRefAccess<SpellObject, float>("START_TIME");
+
+    static void Prefix(TetherballObject __instance)
+    {
+        StartTimeRef(__instance) = 5f;
     }
 }
 
