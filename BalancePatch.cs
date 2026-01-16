@@ -124,6 +124,7 @@ public static class Patch_FlameLeapPrepareDestroy
     }
 }
 
+// shorter chainmail duration 4.7s -> 3.5s
 [HarmonyPatch(typeof(ChainmailObject), "Update")]
 public static class Patch_ChainmailObject_Update
 {
@@ -140,7 +141,7 @@ public static class Patch_ChainmailObject_Update
     }
 }
 
-
+// shorter chameleon cooldown 13s -> 9s
 [HarmonyPatch(typeof(Chameleon), "Initialize")]
 public static class Patch_ChameleonInitialize
 {
@@ -151,6 +152,7 @@ public static class Patch_ChameleonInitialize
     }
 }
 
+// increased sustain damage from 3 to 5
 [HarmonyPatch(typeof(SustainObjectObject), "rpcImpact")]
 public static class Patch_SustainObject_rpcImpact_SetDamage
 {
@@ -164,6 +166,7 @@ public static class Patch_SustainObject_rpcImpact_SetDamage
     }
 }
 
+// reduce ignite dps from 1.8 to 1.5
 [HarmonyPatch(typeof(IgniteObject), "FixedUpdate")]
 public static class Patch_IgniteObject_FixedUpdate_SetDPS
 {
@@ -182,10 +185,10 @@ public static class Patch_IgniteObject_FixedUpdate_SetDPS
             return false;
 
         var id = IdField(__instance);
-        if (id == null) return false;  // skip if not initialized
+        if (id == null) return false;
 
         float newDPS = 1.5f;
-        int owner = id.owner;  // strongly-typed, safe
+        int owner = id.owner;
 
         foreach (var unit in targets)
         {
@@ -197,6 +200,7 @@ public static class Patch_IgniteObject_FixedUpdate_SetDPS
     }
 }
 
+// increased duration of rocket by 20%
 [HarmonyPatch(typeof(RocketObject), "Awake")]
 public static class Patch_RocketObject_Awake_SetStartTime
 {
@@ -209,6 +213,7 @@ public static class Patch_RocketObject_Awake_SetStartTime
     }
 }
 
+// reduce tetherball duration 7s -> 5s
 [HarmonyPatch(typeof(TetherballObject), "Init")]
 public static class Patch_TetherballObject_Init_SetStartTime
 {
@@ -221,27 +226,27 @@ public static class Patch_TetherballObject_Init_SetStartTime
     }
 }
 
-[HarmonyPatch(typeof(WizardStatus), "rpcApplyDamage")]
-public static class Patch_WizardStatus_rpcApplyDamage
-{
-    static void Prefix(WizardStatus __instance, float damage, int owner, int source)
-    {
-        var idField = typeof(WizardStatus).GetField("id", BindingFlags.Instance | BindingFlags.NonPublic);
-        var idValue = idField?.GetValue(__instance);
+// [HarmonyPatch(typeof(WizardStatus), "rpcApplyDamage")]
+// public static class Patch_WizardStatus_rpcApplyDamage
+// {
+//     static void Prefix(WizardStatus __instance, float damage, int owner, int source)
+//     {
+//         var idField = typeof(WizardStatus).GetField("id", BindingFlags.Instance | BindingFlags.NonPublic);
+//         var idValue = idField?.GetValue(__instance);
 
-        int wizardOwner = -1;
-        if (idValue != null)
-        {
-            var ownerField = idValue.GetType().GetField("owner", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (ownerField != null)
-                wizardOwner = (int)ownerField.GetValue(idValue);
-        }
+//         int wizardOwner = -1;
+//         if (idValue != null)
+//         {
+//             var ownerField = idValue.GetType().GetField("owner", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+//             if (ownerField != null)
+//                 wizardOwner = (int)ownerField.GetValue(idValue);
+//         }
 
-        Debug.Log($"[Damage Log] Wizard {wizardOwner} is about to take {damage} damage from {owner}, source {source}");
-    }
+//         Debug.Log($"[Damage Log] Wizard {wizardOwner} is about to take {damage} damage from {owner}, source {source}");
+//     }
 
-    static void Postfix(WizardStatus __instance, float damage, int owner, int source)
-    {
-        Debug.Log($"[Damage Log] Wizard's remaining health: {__instance.health}");
-    }
-}
+//     static void Postfix(WizardStatus __instance, float damage, int owner, int source)
+//     {
+//         Debug.Log($"[Damage Log] Wizard's remaining health: {__instance.health}");
+//     }
+// }
