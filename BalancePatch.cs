@@ -202,6 +202,10 @@ public static class Patch_WizardStatus_rpcApplyDamage_SourceScaling
             case 66:  // brrage
                 damage *= 1.2f;
                 break;
+
+            case 63:  // snowball 6+6t -> 7+7t
+                damage *= 1.166f;
+                break;
         }
     }
 
