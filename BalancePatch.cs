@@ -102,6 +102,32 @@ public static class Patch_RefreshPrimary
 //     }
 // }
 
+
+// [HarmonyPatch(typeof(WizardStatus), "rpcApplyDamage")]
+// public static class Patch_WizardStatus_rpcApplyDamage
+// {
+//     static void Prefix(WizardStatus __instance, float damage, int owner, int source)
+//     {
+//         var idField = typeof(WizardStatus).GetField("id", BindingFlags.Instance | BindingFlags.NonPublic);
+//         var idValue = idField?.GetValue(__instance);
+
+//         int wizardOwner = -1;
+//         if (idValue != null)
+//         {
+//             var ownerField = idValue.GetType().GetField("owner", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+//             if (ownerField != null)
+//                 wizardOwner = (int)ownerField.GetValue(idValue);
+//         }
+
+//         Debug.Log($"[Damage Log] Wizard {wizardOwner} is about to take {damage} damage from {owner}, source {source}");
+//     }
+
+//     static void Postfix(WizardStatus __instance, float damage, int owner, int source)
+//     {
+//         Debug.Log($"[Damage Log] Wizard's remaining health: {__instance.health}, damage taken: {damage}");
+//     }
+// }
+
 // act faster out of geyser (top of jump)
 [HarmonyPatch(typeof(Geyser), "Initialize")]
 public static class Patch_GeyserInitialize
@@ -172,12 +198,26 @@ public static class Patch_WizardStatus_rpcApplyDamage_SourceScaling
             case 13:  // ignite
                 damage *= 0.833f;
                 break;
+
+            case 66:  // brrage
+                damage *= 1.2f;
+                break;
         }
     }
 
     static void Postfix(WizardStatus __instance, float damage, int owner, int source)
     {
         Debug.Log($"[Damage Log] Wizard's remaining health: {__instance.health}, damage taken: {damage}");
+    }
+}
+
+// increased steal trap distance by 50%
+[HarmonyPatch(typeof(StealTrapObject), "Init")]
+public static class Patch_StealTrapObject_Init_IncreaseVelocity
+{
+    static void Prefix(ref float velocity)
+    {
+        velocity *= 1.5f;
     }
 }
 
@@ -207,27 +247,24 @@ public static class Patch_TetherballObject_Init_SetStartTime
     }
 }
 
-// [HarmonyPatch(typeof(WizardStatus), "rpcApplyDamage")]
-// public static class Patch_WizardStatus_rpcApplyDamage
-// {
-//     static void Prefix(WizardStatus __instance, float damage, int owner, int source)
-//     {
-//         var idField = typeof(WizardStatus).GetField("id", BindingFlags.Instance | BindingFlags.NonPublic);
-//         var idValue = idField?.GetValue(__instance);
+[HarmonyPatch(typeof(Brrage), "Initialize")]
+public static class Patch_Brrage_Initialize_Loop3
+{
+    static int num_shots = 3;
+    static bool Prefix(Brrage __instance, Identity identity, Vector3 position, Quaternion rotation, float curve, int spellIndex, bool selfCast, SpellName spellNameForCooldown)
+    {
+        try
+        {
+            for (int i = 0; i < num_shots; i++)
+            {
+                GameUtility.Instantiate("Objects/Brrage", position, rotation, 0)
+                    .GetComponent<BrrageObject>()
+                    .Init(identity, curve * __instance.curveMultiplier, __instance.initialVelocity, i);
+            }
+        }
+        catch (Exception) { /* best-effort only */ }
 
-//         int wizardOwner = -1;
-//         if (idValue != null)
-//         {
-//             var ownerField = idValue.GetType().GetField("owner", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-//             if (ownerField != null)
-//                 wizardOwner = (int)ownerField.GetValue(idValue);
-//         }
-
-//         Debug.Log($"[Damage Log] Wizard {wizardOwner} is about to take {damage} damage from {owner}, source {source}");
-//     }
-
-//     static void Postfix(WizardStatus __instance, float damage, int owner, int source)
-//     {
-//         Debug.Log($"[Damage Log] Wizard's remaining health: {__instance.health}, damage taken: {damage}");
-//     }
-// }
+        // Skip original Initialize which spawns 5 instances
+        return false;
+    }
+}
