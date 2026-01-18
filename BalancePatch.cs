@@ -77,30 +77,30 @@ public static class Patch_RefreshPrimary
 // }
 
 // show hitboxes (dont use wormhole)
-// [HarmonyPatch(typeof(GameUtility), "GetAllInSphere")]
-// public static class Patch_GetAllInSphere_Debug
-// {
-//     static void Prefix(Vector3 center, float radius)
-//     {
-//         DrawDebugSphere(center, radius);
-//     }
+[HarmonyPatch(typeof(GameUtility), "GetAllInSphere")]
+public static class Patch_GetAllInSphere_Debug
+{
+    static void Prefix(Vector3 center, float radius)
+    {
+        DrawDebugSphere(center, radius);
+    }
 
-//     static void DrawDebugSphere(Vector3 pos, float radius)
-//     {
-//         var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-//         go.transform.position = pos;
-//         go.transform.localScale = Vector3.one * radius * 2f;
+    static void DrawDebugSphere(Vector3 pos, float radius)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        go.transform.position = pos;
+        go.transform.localScale = Vector3.one * radius * 2f;
 
-//         var col = go.GetComponent<Collider>();
-//         if (col) col.enabled = false;
+        var col = go.GetComponent<Collider>();
+        if (col) col.enabled = false;
 
-//         var mr = go.GetComponent<MeshRenderer>();
-//         mr.material = new Material(Shader.Find("Sprites/Default"));
-//         mr.material.color = new Color(1f, 0f, 0f, 0.25f);
+        var mr = go.GetComponent<MeshRenderer>();
+        mr.material = new Material(Shader.Find("Sprites/Default"));
+        mr.material.color = new Color(1f, 0f, 0f, 0.25f);
 
-//         GameObject.Destroy(go, 0.1f);
-//     }
-// }
+        GameObject.Destroy(go, 0.1f);
+    }
+}
 
 
 // [HarmonyPatch(typeof(WizardStatus), "rpcApplyDamage")]
@@ -147,7 +147,6 @@ public static class Patch_FlameLeapPrepareDestroy
     static void Prefix(FlameLeapObject __instance)
     {
         __instance.transform.position += __instance.transform.forward * -1f;
-
     }
 }
 
@@ -270,5 +269,17 @@ public static class Patch_Brrage_Initialize_Loop3
 
         // Skip original Initialize which spawns 5 instances
         return false;
+    }
+}
+
+// somassault radius increase from 4 to 5
+[HarmonyPatch(typeof(SomAssaultObject), "PrepareDestroy")]
+public static class Patch_SomAssault_PrepareDestroy
+{
+    static void Prefix(SomAssaultObject __instance)
+    {
+        Traverse.Create(__instance)
+                .Field("RADIUS")
+                .SetValue(5f);
     }
 }

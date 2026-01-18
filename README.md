@@ -34,3 +34,4 @@ MageQuit Gameplay Changes:
 - Flame Leap: reduced hitbox offset
 - Flashflood: removed refresh effect
 - Geyser: shorter animation
+- Sommar Assault: increase radius from 4 to 5
