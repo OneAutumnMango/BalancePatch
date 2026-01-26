@@ -62,14 +62,18 @@ namespace Patches.Balance
         }
     }
 
-    // shorter chameleon cooldown 13s -> 9s
-    [HarmonyPatch(typeof(Chameleon), "Initialize")]
-    public static class Patch_ChameleonInitialize
+    [HarmonyPatch(typeof(SpellManager), "Awake")]
+    public static class Patch_SpellManager_Awake_Postfix_Chameleon
     {
-        static void Prefix(Spell __instance)
+        static void Postfix(SpellManager __instance)
         {
-            if (__instance == null) return;
-            __instance.cooldown = 9f;
+            var mgr = __instance ?? Globals.spell_manager;
+            if (mgr == null || mgr.spell_table == null) return;
+
+            if (mgr.spell_table.TryGetValue(SpellName.Chameleon, out Spell chameleonSpell))
+            {
+                chameleonSpell.cooldown = 9f;
+            }
         }
     }
 
