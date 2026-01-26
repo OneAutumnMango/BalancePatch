@@ -155,4 +155,25 @@ namespace Patches.Balance
                     .SetValue(5f);
         }
     }
+
+    // change brrage count from 5 to 3
+    [HarmonyPatch(typeof(Brrage), "Initialize")]
+    public static class Patch_Brrage_Initialize_Count
+    {
+        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            foreach (var instr in instructions)
+            {
+                // replace integer constant 5 with 3
+                if (instr.opcode == OpCodes.Ldc_I4_5 ||
+                    (instr.opcode == OpCodes.Ldc_I4 && instr.operand is int i && i == 5) ||
+                    (instr.opcode == OpCodes.Ldc_I4_S && instr.operand is sbyte sb && sb == 5))
+                {
+                    instr.opcode = OpCodes.Ldc_I4_3;
+                    instr.operand = null;
+                }
+                yield return instr;
+            }
+        }
+    }
 }
