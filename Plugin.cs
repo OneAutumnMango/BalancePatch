@@ -11,7 +11,6 @@ namespace BalancePatch
 
         public static string seed = "";
         public static System.Random Randomiser;
-        public static int CurrentSeedInt;
 
         private void Awake()
         {
@@ -23,7 +22,7 @@ namespace BalancePatch
 
         private void OnGUI()
         {
-            const int w = 160;
+            const int w = 130;
             const int h = 25;
             const int spacing = 10;
 
@@ -62,13 +61,13 @@ namespace BalancePatch
             if (GUI.Button(new Rect(x2, y1 + h + spacing, textW, h), "Randomise"))
             {
                 int seedInt = hash(seed);
-                CurrentSeedInt = seedInt;
                 Randomiser = new System.Random(seedInt);
                 Log.LogInfo($"BalancePatch input: '{seed}' -> seedInt={seedInt}");
+                Loader.LoadRandomiser();
             }
         }
 
-        static int hash(string s)
+        private static int hash(string s)
         {
             if (string.IsNullOrEmpty(s)) return 0;
 
