@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+using BalancePatch;
 
 namespace Patches.Balance
 {
@@ -58,21 +59,6 @@ namespace Patches.Balance
                     instr.operand = 3.5f;
                 }
                 yield return instr;
-            }
-        }
-    }
-
-    [HarmonyPatch(typeof(SpellManager), "Awake")]
-    public static class Patch_SpellManager_Awake_Postfix_Chameleon
-    {
-        static void Postfix(SpellManager __instance)
-        {
-            var mgr = __instance ?? Globals.spell_manager;
-            if (mgr == null || mgr.spell_table == null) return;
-
-            if (mgr.spell_table.TryGetValue(SpellName.Chameleon, out Spell chameleonSpell))
-            {
-                chameleonSpell.cooldown = 9f;
             }
         }
     }
@@ -177,19 +163,93 @@ namespace Patches.Balance
         }
     }
 
+    // cooldown and description spell_table patches
     [HarmonyPatch(typeof(SpellManager), "Awake")]
-    public static class Patch_SpellManager_Awake_Postfix_Descriptions
+    public static class Patch_SpellManager_Awake_Postfix_CooldownsAndDescriptions
     {
         static void Postfix(SpellManager __instance)
         {
             var mgr = __instance ?? Globals.spell_manager;
             if (mgr == null || mgr.spell_table == null) return;
 
+            if (mgr.spell_table.TryGetValue(SpellName.Chameleon, out Spell chameleonSpell))
+                chameleonSpell.cooldown = 9f;
+
+            if (mgr.spell_table.TryGetValue(SpellName.TowVine, out Spell towVineSpell))
+            {
+                towVineSpell.cooldown = 9f;
+                towVineSpell.additionalCasts[0].cooldown = 9f;  // recast
+            }
+
+            if (mgr.spell_table.TryGetValue(SpellName.BullRush, out Spell bullRushSpell))
+                bullRushSpell.cooldown = 13f;
+
+
             if (mgr.spell_table.TryGetValue(SpellName.FlashFlood, out Spell flashFloodSpell))
                 flashFloodSpell.description = "Short range teleport that resets velocity. Can be reactivated to return to casting point.";
 
             if (mgr.spell_table.TryGetValue(SpellName.Brrage, out Spell brrageSpell))
                 brrageSpell.description = "Fires a barrage of 3 icicles in the cast direction, dealing damage and creating new crystals after a delay. On cast, your Crystals become Inert, just sitting there.";
+        }
+    }
+
+    // dogs 20% slower
+    [HarmonyPatch(typeof(CrystalObject), "Awake")]
+    public static class Patch_CrystalObject_Awake_SetVelocity
+    {
+        static void Postfix(CrystalObject __instance)
+        {
+            if (__instance == null) return;
+            float prev = __instance.velocity;
+            __instance.velocity = prev * 0.8f;
+        }
+    }
+
+    // turtle 25% faster
+    [HarmonyPatch(typeof(BombshellObject), "FixedUpdate")]
+    public static class Patch_BombshellObject_FixedUpdate_Multiplier
+    {
+        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            float prev = 0.275f;
+            foreach (var instr in instructions)
+            {
+                if (instr.opcode == OpCodes.Ldc_R4 && instr.operand is float f && Math.Abs(f - prev) < 1e-6f)
+                {
+                    instr.operand = prev * 1.25f;
+                }
+                yield return instr;
+            }
+        }
+    }
+
+    // tsunami 15% faster
+    [HarmonyPatch(typeof(TsunamiObject), "FixedUpdate")]
+    public static class Patch_TsunamiObject_FixedUpdate_Multiplier
+    {
+        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            float prev = 0.6f;
+            foreach (var instr in instructions)
+            {
+                if (instr.opcode == OpCodes.Ldc_R4 && instr.operand is float f && Math.Abs(f - prev) < 1e-6f)
+                {
+                    instr.operand = prev * 1.15f;
+                }
+                yield return instr;
+            }
+        }
+    }
+
+    // stop lava triggering bubblebreaker
+    [HarmonyPatch(typeof(BubbleBreakerObject), "rpcRegisterDamage")]
+    public static class Patch_BubbleBreakerObject_rpcRegisterDamage
+    {
+        static bool Prefix(float damage)
+        {
+            if (damage == 0.067f)  // lava damage, owner doesnt work
+                return false;
+            return true;
         }
     }
 }

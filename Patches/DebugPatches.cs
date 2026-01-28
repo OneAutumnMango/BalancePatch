@@ -58,4 +58,30 @@ namespace Patches.Debug
             Plugin.Log.LogInfo($"[Damage Log] Wizard's remaining health: {__instance.health}, damage taken: {damage}");
         }
     }
+
+    // Log healing
+    [HarmonyPatch(typeof(WizardStatus), "rpcApplyHealing")]
+    public static class Patch_WizardStatus_rpcApplyHealing
+    {
+        static void Prefix(WizardStatus __instance, float healing, int owner)
+        {
+            var idField = typeof(WizardStatus).GetField("id", BindingFlags.Instance | BindingFlags.NonPublic);
+            var idValue = idField?.GetValue(__instance);
+
+            int wizardOwner = -1;
+            if (idValue != null)
+            {
+                var ownerField = idValue.GetType().GetField("owner", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (ownerField != null)
+                    wizardOwner = (int)ownerField.GetValue(idValue);
+            }
+
+            Plugin.Log.LogInfo($"[Healing Log] Wizard {wizardOwner} is about to heal {healing} health from {owner}");
+        }
+
+        static void Postfix(WizardStatus __instance, float healing, int owner)
+        {
+            Plugin.Log.LogInfo($"[Healing Log] Wizard's current health: {__instance.health}, healing applied: {healing}");
+        }
+    }
 }

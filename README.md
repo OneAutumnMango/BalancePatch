@@ -29,9 +29,19 @@ MageQuit Gameplay Changes:
 - Sustain: now deals 5 damage
 - Rocket: increased range
 - Fire Melee: damage reduced by 17%
-- Chameleon: cooldown reduced from 13s → 9s (only works locally rn)
+- Chameleon: cooldown reduced from 13s → 9s
 - Chainmail: duration reduced from 4.7s → 3.5s
 - Flame Leap: reduced hitbox offset
 - Flashflood: removed refresh effect
 - Geyser: shorter animation
-- Sommar Assault: increase radius from 4 to 5
+- Sommar Assault: increase radius from 4 → 5
+- Bombshell: turtle speed increased by 25%
+- Tsunami: speed increased by 15%
+- Icepack: dogs 20% slower
+- Towvine: cooldown reduced from 12s → 9s
+- Bubble Breaker: prevents lava damage
+- BullRush: cooldown increased from 12s → 13s
+
+Debugging:
+- Damage and Healing logged
+- Hitboxes for player shown (spells used by others online don't show for you)
