@@ -31,7 +31,7 @@ MageQuit Gameplay Changes:
 - Fire Melee: damage reduced by 17%
 - Chameleon: cooldown reduced from 13s → 9s
 - Chainmail: duration reduced from 4.7s → 3.5s
-- Flame Leap: reduced hitbox offset
+- Flame Leap: reduced hitbox offset, cooldown increased from 11s → 12s
 - Flashflood: removed refresh effect
 - Geyser: shorter animation
 - Sommar Assault: increase radius from 4 → 5
@@ -42,7 +42,7 @@ MageQuit Gameplay Changes:
 - Bubble Breaker: prevents lava damage
 - BullRush: cooldown increased from 12s → 13s
 - Hinder: slow reduced from 50% → 40%
-- Echo: cooldown reduces from 5.5s → 5s
+- Echo: cooldown reduced from 5.5s → 5s
 
 Debugging:
 - Damage and Healing logged
