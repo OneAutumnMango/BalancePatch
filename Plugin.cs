@@ -57,7 +57,11 @@ namespace BalancePatch
             int x2 = x + w + spacing;
             int textW = 80;
 
-            if (!Loader.RandomiserLoaded) {
+            if (Loader.RandomiserUnloaded)
+                return;
+
+            if (!Loader.RandomiserLoaded)
+            {
                 seed = GUI.TextField(new Rect(x2, y1, textW, h), seed);
 
                 if (GUI.Button(new Rect(x2, y1 + h + spacing, textW, h), "Randomise"))
@@ -67,6 +71,11 @@ namespace BalancePatch
                     Log.LogInfo($"BalancePatch input: '{seed}' -> seedInt={seedInt}");
                     Loader.LoadRandomiser();
                 }
+            }
+            else
+            {
+                if (GUI.Button(new Rect(x2, y1, w, h), "Unload Randomiser"))
+                    Loader.UnloadRandomiser();
             }
         }
 

@@ -1,4 +1,5 @@
 This is my attempt to balance magequit/do what my friends thought of.
+It now also contains a randomiser for spell attributes if you want that.
 
 I have no experience with modding so apologies if I've done some horrible things
 
@@ -11,15 +12,29 @@ DO NOT USE THESE MODS FOR ONLINE PLAY WITH RANDOMS. IT CAN CAUSE SOME MAJOR ISSU
 
 1. Install BepinEx 5 into your MageQuit directory.
 2. Run and then open MageQuit to generate BepinEx files.
-3. Build this plugin with `dotnet build` (maybe there will be a prebuild dll in bin).
+3. (optional) Build this plugin with `dotnet build` (there will be a prebuilt dll in bin).
 
    If this breaks remove the `CopyToBepInEx` target from the `.csproj` file probably, message `oneautumnmango` on Discord, DO NOT ASK THE MAGEQUIT DISCORD.
 4. If you didn't build, you need to copy `bin/Debug/net472/BalancePatch.dll` to `MageQuit/BepInEx/plugins`.
 5. Launch the game.
 
 
+## How to Use the Randomiser
+
+1. Launch the game (after install)
+2. Enter in a seed (letters + numbers)
+3. Click `Randomise`
+4. Enter into a game.
+
+
+#### IMPORTANT!! Make sure to reach this before playing:
+- You must randomise BEFORE entering a game.
+- Ensure EVERYONE you're playing with uses the same seed.
+- Once randomised you have to quit MageQuit to randomise again.
+
+
 ## Changes:
-MageQuit Gameplay Changes:
+**MageQuit Gameplay Changes**:
 
 - Snowball: increased damage by 16.66%
 - Steal Trap: increased distance by 50%,
@@ -44,6 +59,19 @@ MageQuit Gameplay Changes:
 - Hinder: slow reduced from 50% → 40%
 - Echo: cooldown reduced from 5.5s → 5s
 
-Debugging:
+**Randomiser**:
+
+Added a randomiser to randomise the following:
+
+- Cooldowns (not of recasts)
+- Animation WindUp and WindDown
+- Spell Velocity
+- Projectile Size
+- Damage
+- Hitbox Radius
+- X and Y Knockback
+
+**Debugging**:
+
 - Damage and Healing logged
 - Hitboxes for player shown (spells used by others online don't show for you)
