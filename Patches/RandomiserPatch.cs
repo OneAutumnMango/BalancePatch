@@ -5,6 +5,8 @@ using System.Reflection;
 using System.Reflection.Emit;
 using BalancePatch;
 using System;
+using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace Patches.Randomiser
 {
@@ -12,49 +14,31 @@ namespace Patches.Randomiser
 
     // cooldown and description spell_table patches
     [HarmonyPatch(typeof(SpellManager), "Awake")]
-    public static class Patch_SpellManager_Awake_Postfix_CooldownsAndDescriptions
+    public static class Patch_SpellManager_Awake_Postfix_Randomiser
     {
+        public static SpellManager mgr;
         static void Postfix(SpellManager __instance)
         {
-            var mgr = __instance ?? Globals.spell_manager;
+            mgr = __instance ?? Globals.spell_manager;
             if (mgr == null || mgr.spell_table == null) return;
 
             System.Random rng = Plugin.Randomiser;
+            float bound = 1.6f;
 
             foreach (SpellName name in SpellName.GetValues(typeof(SpellName)))
             {
                 if (mgr.spell_table.TryGetValue(name, out Spell spell))
                 {
-                    // spell.cooldown        = RandomTweak(rng, spell.cooldown);
-                    // spell.windUp          = RandomTweak(rng, spell.windUp);
-                    // spell.windDown        = RandomTweak(rng, spell.windDown);
-                    // spell.initialVelocity = RandomTweak(rng, spell.initialVelocity);
-                    // spell.spellRadius     = RandomTweak(rng, spell.spellRadius);
+                    Func<float, float> tweakFunc =
+                        spell.spellButton == SpellButton.Primary
+                            ? oldValue => NextGaussian(rng, oldValue, 0.1f * oldValue)
+                            : oldValue => RandomTweak(rng, oldValue);
 
-                                // Cooldown
-                    float oldValue = spell.cooldown;
-                    spell.cooldown = RandomTweak(rng, oldValue);
-                    Plugin.Log.LogInfo($"[{name}] cooldown: {oldValue} -> {spell.cooldown}");
-
-                    // WindUp
-                    oldValue = spell.windUp;
-                    spell.windUp = RandomTweak(rng, oldValue);
-                    Plugin.Log.LogInfo($"[{name}] windUp: {oldValue} -> {spell.windUp}");
-
-                    // WindDown
-                    oldValue = spell.windDown;
-                    spell.windDown = RandomTweak(rng, oldValue);
-                    Plugin.Log.LogInfo($"[{name}] windDown: {oldValue} -> {spell.windDown}");
-
-                    // InitialVelocity
-                    oldValue = spell.initialVelocity;
-                    spell.initialVelocity = RandomTweak(rng, oldValue);
-                    Plugin.Log.LogInfo($"[{name}] initialVelocity: {oldValue} -> {spell.initialVelocity}");
-
-                    // SpellRadius
-                    oldValue = spell.spellRadius;
-                    spell.spellRadius = RandomTweak(rng, oldValue);
-                    Plugin.Log.LogInfo($"[{name}] spellRadius: {oldValue} -> {spell.spellRadius}");
+                    spell.cooldown        = tweakFunc(spell.cooldown);
+                    spell.windUp          = Math.Min(tweakFunc(spell.windUp), spell.windUp * bound);
+                    spell.windDown        = Math.Min(tweakFunc(spell.windDown), spell.windDown * bound);
+                    spell.initialVelocity = Math.Max(tweakFunc(spell.initialVelocity), spell.initialVelocity / bound);
+                    spell.spellRadius     = tweakFunc(spell.spellRadius);
                 }
             }
         }
@@ -67,7 +51,7 @@ namespace Patches.Randomiser
             return (float)(mean + stdDev * randStdNormal);
         }
 
-        private static float RandomTweak(System.Random rng, float original, float stdDev = 0.3f, float rareMultiplier = 3f, float rareChance = 0.05f)
+        public static float RandomTweak(System.Random rng, float original, float stdDev = 0.45f, float rareMultiplier = 3f, float rareChance = 0.1f)
         {
             float value = NextGaussian(rng, original, stdDev * original); // small wiggle
             if (rng.NextDouble() < rareChance)
@@ -75,5 +59,47 @@ namespace Patches.Randomiser
             return value;
         }
 
+        public static void PatchAllSpellObjects(Harmony harmony)
+        {
+            foreach (SpellName name in Enum.GetValues(typeof(SpellName)))
+            {
+                string fullTypeName = $"BalancePatch.{name}Object"; // include namespace
+                Type spellType = AppDomain.CurrentDomain.GetAssemblies()
+                                    .Select(a => a.GetType(fullTypeName))
+                                    .FirstOrDefault(t => t != null);
+                if (spellType == null) continue;
+
+                MethodInfo initMethod = spellType.GetMethod("Init", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (initMethod == null) continue;
+
+                MethodInfo postfixMethod = typeof(Patch_SpellManager_Awake_Postfix_Randomiser).GetMethod(
+                    nameof(Postfix_SpellObjectInit),
+                    BindingFlags.Static | BindingFlags.NonPublic
+                );
+
+                harmony.Patch(initMethod, postfix: new HarmonyMethod(postfixMethod));
+            }
+        }
+
+        private static void Postfix_SpellObjectInit(object __instance)
+        {
+            var rng = Plugin.Randomiser;
+            BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
+
+            string[] tweakFields = { "DAMAGE", "RADIUS", "POWER", "Y_POWER" };
+
+            foreach (var fieldName in tweakFields)
+            {
+                FieldInfo field = __instance.GetType().GetField(fieldName, flags);
+                if (field != null && field.FieldType == typeof(float))
+                {
+                    float oldValue = (float)field.GetValue(__instance);
+                    float newValue = RandomTweak(rng, oldValue);
+                    field.SetValue(__instance, newValue);
+
+                    Plugin.Log.LogInfo($"[{__instance.GetType().Name}] {field.Name}: {oldValue:F2} -> {newValue:F2}");
+                }
+            }
+        }
     }
 }

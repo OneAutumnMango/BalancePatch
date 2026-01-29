@@ -1,4 +1,5 @@
 using HarmonyLib;
+using Patches.Randomiser;
 using System;
 using System.Reflection;
 
@@ -70,25 +71,32 @@ namespace BalancePatch
 
         public static void LoadRandomiser()
         {
-            if (RandomiserLoaded) return;
+            // if (RandomiserLoaded) return;
+
+            // call SpellManager.Awake() again
+            typeof(SpellManager).GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?.Invoke(Patch_SpellManager_Awake_Postfix_Randomiser.mgr, null);
+
 
             _randomiserHarmony = new Harmony(RandomiserHarmonyId);
             PatchGroup(_randomiserHarmony, typeof(Patches.Randomiser.RandomiserPatch));
+
+            Patch_SpellManager_Awake_Postfix_Randomiser.PatchAllSpellObjects(_randomiserHarmony);
 
             RandomiserLoaded = true;
             Plugin.Log.LogInfo("Randomiser patches loaded");
         }
 
-        public static void UnloadRandomiser()
-        {
-            if (!RandomiserLoaded) return;
+        // public static void UnloadRandomiser()
+        // {
+        //     if (!RandomiserLoaded) return;
 
-            _randomiserHarmony.UnpatchSelf();
-            _randomiserHarmony = null;
+        //     _randomiserHarmony.UnpatchSelf();
+        //     _randomiserHarmony = null;
 
-            RandomiserLoaded = false;
-            Plugin.Log.LogInfo("Randomiser patches unloaded");
-        }
+        //     RandomiserLoaded = false;
+        //     Plugin.Log.LogInfo("Randomiser patches unloaded");
+        // }
 
         // ---------------- Shared ----------------
 
