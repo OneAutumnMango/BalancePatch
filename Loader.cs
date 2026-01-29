@@ -76,8 +76,8 @@ namespace BalancePatch
             _randomiserHarmony = new Harmony(RandomiserHarmonyId);
             PatchGroup(_randomiserHarmony, typeof(Patches.Randomiser.RandomiserPatch));
 
-            Patch_SpellManager_Awake_Postfix_Randomiser.PrecomputeSpellValues();
-            Patch_SpellManager_Awake_Postfix_Randomiser.PatchAllSpellObjects(_randomiserHarmony);
+            Patch_SpellManager_Randomiser.PrecomputeSpellAttributes();
+            Patch_SpellManager_Randomiser.PatchAllSpellObjects(_randomiserHarmony);
 
             RandomiserLoaded = true;
             Plugin.Log.LogInfo("Randomiser patches loaded");

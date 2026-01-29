@@ -14,7 +14,7 @@ namespace Patches.Randomiser
 
     // cooldown and description spell_table patches
     [HarmonyPatch(typeof(SpellManager), "Awake")]
-    public static class Patch_SpellManager_Awake_Postfix_Randomiser
+    public static class Patch_SpellManager_Randomiser
     {
         public static SpellManager mgr;
         private static readonly float bound = 1.6f;
@@ -62,9 +62,9 @@ namespace Patches.Randomiser
                 if (original == 0f)
                     original += 0.1f;  // surely have some fun
                 value = original + (float)((rng.NextDouble() * 2 - 1) * rareMultiplier * original); // big deviation
-                Plugin.Log.LogInfo($"[RandomTweak] {original:F2} -> {Math.Max(0, value):F2}");
+                Plugin.Log.LogInfo($"[RandomTweak] {original:F2} -> {Math.Max(0.1f * original, value):F2}");
             }
-            return Math.Max(0, value);
+            return Math.Max(0.1f * original, value);
         }
 
         public static void PatchAllSpellObjects(Harmony harmony)
@@ -80,7 +80,7 @@ namespace Patches.Randomiser
                 MethodInfo initMethod = spellType.GetMethod("Init", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                 if (initMethod == null) continue;
 
-                MethodInfo prefixMethod = typeof(Patch_SpellManager_Awake_Postfix_Randomiser).GetMethod(
+                MethodInfo prefixMethod = typeof(Patch_SpellManager_Randomiser).GetMethod(
                     nameof(Prefix_SpellObjectInit),
                     BindingFlags.Static | BindingFlags.NonPublic
                 );
@@ -91,7 +91,7 @@ namespace Patches.Randomiser
 
         private static readonly Dictionary<Type, Dictionary<string, float>> PrecomputedSpellValues = [];
 
-        public static void PrecomputeSpellValues()
+        public static void PrecomputeSpellAttributes()
         {
             var rng = Plugin.Randomiser;
             BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
