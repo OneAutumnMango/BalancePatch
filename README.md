@@ -1,7 +1,7 @@
 This is my attempt to balance magequit/do what my friends thought of.
 It now also contains a randomiser for spell attributes if you want that.
 
-I have no experience with modding so apologies if I've done some horrible things
+I have no experience with modding so apologies if I've done some horrible things (especially the randomiser 💀)
 
 Thank you to the developers for letting people mod this game, check out their discord if you have a chance https://discord.gg/jS5Rsvtp
 
@@ -10,13 +10,14 @@ DO NOT USE THESE MODS FOR ONLINE PLAY WITH RANDOMS. IT CAN CAUSE SOME MAJOR ISSU
 
 ## How to Install
 
-1. Install BepinEx 5 into your MageQuit directory.
-2. Run and then open MageQuit to generate BepinEx files.
-3. (optional) Build this plugin with `dotnet build` (there will be a prebuilt dll in bin).
-
-   If this breaks remove the `CopyToBepInEx` target from the `.csproj` file probably, message `oneautumnmango` on Discord, DO NOT ASK THE MAGEQUIT DISCORD.
-4. If you didn't build, you need to copy `bin/Debug/net472/BalancePatch.dll` to `MageQuit/BepInEx/plugins`.
+1. Install [BepinEx 5](https://github.com/BepInEx/BepInEx/releases/tag/v5.4.23.4) into your MageQuit directory.
+2. Run and then open MageQuit to generate BepInEx files.
+3. Download the latest release here.
+4. Extract the contents of the downloaded zip file into your MageQuit directory. (should be like `MageQuit/BepInEx/plugins/BalancePatch.dll`)
 5. Launch the game.
+
+BepInEx mirror: https://www.nexusmods.com/magequit/mods/1 <br>
+BalancePatch mirror: https://www.nexusmods.com/magequit/mods/2
 
 
 ## How to Use the Randomiser
