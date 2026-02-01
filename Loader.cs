@@ -1,5 +1,6 @@
 using HarmonyLib;
 using Patches.Randomiser;
+using Patches.Boosted;
 using System;
 using System.Reflection;
 
@@ -10,14 +11,18 @@ namespace BalancePatch
         private const string BalanceHarmonyId = "org.bepinex.plugins.balancepatch.balance";
         private const string DebugHarmonyId = "org.bepinex.plugins.balancepatch.debug";
         private const string RandomiserHarmonyId = "org.bepinex.plugins.balancepatch.randomiser";
+        private const string BoostedHarmonyId = "org.bepinex.plugins.balancepatch.boosted";
 
         private static Harmony _balanceHarmony;
         private static Harmony _debugHarmony;
         private static Harmony _randomiserHarmony;
+        private static Harmony _boostedHarmony;
 
         public static bool BalanceLoaded { get; private set; }
         public static bool DebugLoaded { get; private set; }
         public static bool RandomiserLoaded { get; private set; }
+        public static bool BoostedLoaded { get; private set; }
+
         // ---------------- Balance ----------------
 
         public static void LoadBalance()
@@ -93,6 +98,32 @@ namespace BalancePatch
         //     RandomiserUnloaded = true;
         //     Plugin.Log.LogInfo("Randomiser patches unloaded");
         // }
+
+        // ---------------- Boosted ----------------
+
+        public static void LoadBoosted()
+        {
+            if (BoostedLoaded) return;
+
+            _boostedHarmony = new Harmony(BoostedHarmonyId);
+            PatchGroup(_boostedHarmony, typeof(Patches.Boosted.BoostedPatch));
+
+            BoostedPatch.PrintConfig();
+
+            BoostedLoaded = true;
+            Plugin.Log.LogInfo("Boosted patches loaded");
+        }
+
+        public static void UnloadBoosted()
+        {
+            if (!BoostedLoaded) return;
+
+            _boostedHarmony.UnpatchSelf();
+            _boostedHarmony = null;
+
+            BoostedLoaded = false;
+            Plugin.Log.LogInfo("Boosted patches unloaded");
+        }
 
         // ---------------- Shared ----------------
 

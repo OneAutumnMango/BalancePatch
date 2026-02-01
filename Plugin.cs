@@ -70,6 +70,17 @@ namespace BalancePatch
 
             // Restore GUI
             GUI.enabled = true;
+
+            if (Loader.BoostedLoaded)
+            {
+                if (GUI.Button(new Rect(x2 + textW + spacing, y1, w, h), "Unload Boosted"))
+                    Loader.UnloadBoosted();
+            }
+            else
+            {
+                if (GUI.Button(new Rect(x2 + textW + spacing, y1, w, h), "Load Boosted"))
+                    Loader.LoadBoosted();
+            }
         }
 
         private static int hash(string s)
