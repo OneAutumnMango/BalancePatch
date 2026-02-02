@@ -72,8 +72,8 @@ namespace BalancePatch
             // Restore GUI
             GUI.enabled = true;
 
-            if (Loader.SpellManagerLoaded())
-            {
+            // if (Loader.SpellManagerLoaded())
+            // {
                 if (Loader.BoostedLoaded)
                 {
                     if (GUI.Button(new Rect(x2 + textW + spacing, y1, w, h), "Unload Boosted"))
@@ -83,7 +83,7 @@ namespace BalancePatch
                 {
                     if (GUI.Button(new Rect(x2 + textW + spacing, y1, w, h), "Load Boosted"))
                         Loader.LoadBoosted();
-                }
+            // }
             }
         }
 

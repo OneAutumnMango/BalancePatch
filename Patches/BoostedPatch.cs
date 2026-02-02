@@ -27,9 +27,9 @@ namespace Patches.Boosted
             }
         }
 
-        public static readonly Tier Common = new Tier(1f, .25f, -.1f);
-        public static readonly Tier Rare = new Tier(.25f, .5f, -.2f);
-        public static readonly Tier Legendary = new Tier(.05f, .75f, -.3f);
+        public static readonly Tier Common = new(1.00f, 0.25f, -0.10f);
+        public static readonly Tier Rare = new(0.25f, 0.50f, -0.20f);
+        public static readonly Tier Legendary = new(0.05f, 0.75f, -0.30f);
 
         // Optional: array for iteration
         public static readonly Tier[] AllTiers = { Common, Rare, Legendary };
@@ -170,21 +170,57 @@ namespace Patches.Boosted
 
 
     // // ROUND WATCHER
-    // [HarmonyPatch(typeof(NetworkManager), "CombineRoundScores")]
-    // public static class NetworkManager_CombineRoundScores_RoundLogger
-    // {
-    //     private static void Prefix()
-    //     {
-    //         // wait for 5 seconds and log each second
-    //         for (int i = 5; i > 0; i--)
-    //         {
-    //             Plugin.Log.LogInfo($"[RoundWatcher] CombineRoundScores → waiting {i} seconds...");
-    //             System.Threading.Thread.Sleep(1000);
-    //         }
+    [HarmonyPatch(typeof(NetworkManager), "CombineRoundScores")]
+    public static class NetworkManager_CombineRoundScores_RoundLogger
+    {
+        private static void Prefix()
+        {
+            // wait for 10 seconds and log each second
+            for (int i = 10; i > 0; i--)
+            {
+                Plugin.Log.LogInfo($"[RoundWatcher] CombineRoundScores → waiting {i} seconds...");
+                System.Threading.Thread.Sleep(1000);
+            }
 
-    //         Plugin.Log.LogInfo(
-    //             $"[RoundWatcher] CombineRoundScores → round {PlayerManager.round}"
-    //         );
-    //     }
-    // }
+            Plugin.Log.LogInfo(
+                $"[RoundWatcher] CombineRoundScores → round {PlayerManager.round}"
+            );
+        }
+    }
+
+
+    [HarmonyPatch(typeof(PlayerManager), "AddPlayer")]
+    public static class Patch_PlayerManager_AddPlayer
+    {
+        static void Prefix(int number, InputType inputType)
+        {
+            Plugin.Log.LogInfo($"[PlayerManager] Adding Player: {number}, InputType: {inputType}");
+            // public static Dictionary<int, Player> players = new Dictionary<int, Player>();
+            Plugin.Log.LogInfo($"[PlayerManager] Current Players: {string.Join(", ", PlayerManager.players.Keys)}");
+        }
+    }
+    //     public static class PlayerManager
+    // {
+    // 	// Token: 0x06000D7D RID: 3453 RVA: 0x0006FD68 File Offset: 0x0006DF68
+    // 	public static bool AddPlayer(int number, InputType inputType = InputType.Player)
+    // 	{
+    // 		bool flag = false;
+    // 		if (!PlayerManager.players.ContainsKey(number))
+    // 		{
+    // 			PlayerManager.players[number] = new Player(number, inputType);
+    // 			flag = true;
+    // 		}
+    // 		if (PlayerManager.playerOrder.Count > 0)
+    // 		{
+    // 			PlayerManager.playerOrder[number] = PlayerManager.players.Count;
+    // 		}
+    // 		NetworkLogger.Log(string.Concat(new object[]
+    // 		{
+    // 			"Added Player: ",
+    // 			number,
+    // 			", Total Players: ",
+    // 			PlayerManager.players.Count
+    // 		}));
+    // 		return flag;
+    // 	}
 }
