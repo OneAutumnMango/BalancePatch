@@ -27,9 +27,9 @@ namespace Patches.Boosted
             }
         }
 
-        public static readonly Tier Common = new Tier(1.00, .25, -.1);
-        public static readonly Tier Rare = new Tier(0.25, .50, -.2);
-        public static readonly Tier Legendary = new Tier(0.05, .75, -.3);
+        public static readonly Tier Common = new Tier(1f, .25f, -.1f);
+        public static readonly Tier Rare = new Tier(.25f, .5f, -.2f);
+        public static readonly Tier Legendary = new Tier(.05f, .75f, -.3f);
 
         // Optional: array for iteration
         public static readonly Tier[] AllTiers = { Common, Rare, Legendary };
