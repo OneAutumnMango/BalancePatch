@@ -18,6 +18,7 @@ namespace BalancePatch
             Log.LogInfo("Balance Patch loaded");
 
             Loader.LoadBalance();
+            Loader.LoadUtil();
         }
 
         private void OnGUI()
@@ -71,15 +72,18 @@ namespace BalancePatch
             // Restore GUI
             GUI.enabled = true;
 
-            if (Loader.BoostedLoaded)
+            if (Loader.SpellManagerLoaded())
             {
-                if (GUI.Button(new Rect(x2 + textW + spacing, y1, w, h), "Unload Boosted"))
-                    Loader.UnloadBoosted();
-            }
-            else
-            {
-                if (GUI.Button(new Rect(x2 + textW + spacing, y1, w, h), "Load Boosted"))
-                    Loader.LoadBoosted();
+                if (Loader.BoostedLoaded)
+                {
+                    if (GUI.Button(new Rect(x2 + textW + spacing, y1, w, h), "Unload Boosted"))
+                        Loader.UnloadBoosted();
+                }
+                else
+                {
+                    if (GUI.Button(new Rect(x2 + textW + spacing, y1, w, h), "Load Boosted"))
+                        Loader.LoadBoosted();
+                }
             }
         }
 

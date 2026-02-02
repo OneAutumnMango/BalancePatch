@@ -6,19 +6,20 @@ using BalancePatch;
 using System;
 using System.Linq;
 using System.IO;
+using Patches.Util;
 
 
 namespace Patches.Boosted
 {
-    internal static class BoostedConfig
+    internal static class Upgrades
     {
         public readonly struct Tier
         {
-            public double Rate { get; }
-            public double Up { get; }
-            public double Down { get; }
+            public float Rate { get; }
+            public float Up { get; }
+            public float Down { get; }
 
-            public Tier(double rate, double up, double down)
+            public Tier(float rate, float up, float down)
             {
                 Rate = rate;
                 Up = up;
@@ -26,19 +27,23 @@ namespace Patches.Boosted
             }
         }
 
-        public static readonly Tier Common = new Tier(1.00, 1.25, 0.90);
-        public static readonly Tier Rare = new Tier(0.25, 1.50, 0.80);
-        public static readonly Tier Ultra = new Tier(0.05, 1.75, 0.70);
+        public static readonly Tier Common = new Tier(1.00, .25, -.1);
+        public static readonly Tier Rare = new Tier(0.25, .50, -.2);
+        public static readonly Tier Legendary = new Tier(0.05, .75, -.3);
 
         // Optional: array for iteration
-        public static readonly Tier[] AllTiers = { Common, Rare, Ultra };
+        public static readonly Tier[] AllTiers = { Common, Rare, Legendary };
     }
 
     public static class BoostedPatch
     {
+        private static string[] ClassAttributeKeys = ["DAMAGE", "RADIUS", "POWER", "Y_POWER"];
+        private static string[] SpellTableKeys = ["cooldown", "windUp", "windDown", "initialVelocity", "spellRadius"];
+        private static Dictionary<SpellName, Dictionary<String, Dictionary<String, float>>> SpellModifierTable = [];
+
         public static void PrintConfig()
         {
-            void PrintTier(string name, BoostedConfig.Tier tier)
+            void PrintTier(string name, Upgrades.Tier tier)
             {
                 Plugin.Log.LogInfo($"Category: {name}");
                 Plugin.Log.LogInfo($"  Rate: {tier.Rate}");
@@ -46,9 +51,79 @@ namespace Patches.Boosted
                 Plugin.Log.LogInfo($"  Down: {tier.Down}");
             }
 
-            PrintTier("Common", BoostedConfig.Common);
-            PrintTier("Rare", BoostedConfig.Rare);
-            PrintTier("Ultra", BoostedConfig.Ultra);
+            PrintTier("Common", Upgrades.Common);
+            PrintTier("Rare", Upgrades.Rare);
+            PrintTier("Legendary", Upgrades.Legendary);
+        }
+
+        private static void TryUpdateModifier(SpellName name, string attribute, float mod)
+        {
+            if (SpellModifierTable.TryGetValue(name, out var attributeModifiers))
+            {
+                if (attributeModifiers.TryGetValue(attribute, out var modifiers))
+                {
+                    modifiers["mult"] += mod;
+                }
+            }
+        }
+
+        private static Upgrades.Tier GetRandomTier()
+        {
+            double roll = Plugin.Randomiser.NextDouble();
+            if (roll < Upgrades.Legendary.Rate)
+                return Upgrades.Legendary;
+            else if (roll < Upgrades.Rare.Rate)
+                return Upgrades.Rare;
+            else
+                return Upgrades.Common;
+        }
+
+        private static void ApplyTier(SpellName name, string attribute, Upgrades.Tier tier, bool up)
+        {
+            TryUpdateModifier(name, attribute, up ? tier.Up : -tier.Down);
+        }
+
+        public static void PopulateSpellModifierTable()
+        {
+            foreach (SpellName name in Util.Util.DefaultSpellTable.Keys)
+            {
+                Dictionary<string, Dictionary<String, float>> AttributeModifiers = [];
+
+                foreach (String classAttributeKey in ClassAttributeKeys)
+                {
+                    AttributeModifiers[classAttributeKey] = new Dictionary<String, float>
+                    {
+                        ["base"] = Util.Util.DefaultClassAttributes[name][classAttributeKey],
+                        ["mult"] = 1f
+                    };
+                }
+
+                foreach (String spelltablekey in SpellTableKeys)
+                {
+                    FieldInfo field = typeof(Spell).GetField(spelltablekey, BindingFlags.Public | BindingFlags.Instance);
+                    Spell spell = Util.Util.DefaultSpellTable[name];
+
+                    AttributeModifiers[spelltablekey] = new Dictionary<String, float>
+                    {
+                        ["base"] = (float)field.GetValue(spell),
+                        ["mult"] = 1f
+                    };
+
+                }
+                SpellModifierTable[name] = AttributeModifiers;
+            }
+            // string inline = "{" + string.Join(", ",
+            // SpellModifierTable.Select(spellKvp =>
+            //     $"\"{spellKvp.Key}\": {{" +
+            //     string.Join(", ", spellKvp.Value.Select(classKvp =>
+            //         $"\"{classKvp.Key}\": {{" +
+            //         string.Join(", ", classKvp.Value.Select(statKvp => $"\"{statKvp.Key}\": {statKvp.Value}")) +
+            //         "}"
+            //     )) +
+            //     "}"
+            // )) + "}";
+
+            // Plugin.Log.LogInfo(inline);
         }
     }
 

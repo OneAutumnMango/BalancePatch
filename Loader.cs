@@ -1,6 +1,7 @@
 using HarmonyLib;
 using Patches.Randomiser;
 using Patches.Boosted;
+using Patches.Util;
 using System;
 using System.Reflection;
 
@@ -12,16 +13,36 @@ namespace BalancePatch
         private const string DebugHarmonyId = "org.bepinex.plugins.balancepatch.debug";
         private const string RandomiserHarmonyId = "org.bepinex.plugins.balancepatch.randomiser";
         private const string BoostedHarmonyId = "org.bepinex.plugins.balancepatch.boosted";
+        private const string UtilHarmonyId = "org.bepinex.plugins.balancepatch.util";
 
         private static Harmony _balanceHarmony;
         private static Harmony _debugHarmony;
         private static Harmony _randomiserHarmony;
         private static Harmony _boostedHarmony;
+        private static Harmony _utilHarmony;
 
         public static bool BalanceLoaded { get; private set; }
         public static bool DebugLoaded { get; private set; }
         public static bool RandomiserLoaded { get; private set; }
         public static bool BoostedLoaded { get; private set; }
+        public static bool UtilLoaded { get; private set; }
+        public static bool SpellManagerLoaded()
+        {
+            return Util.spellManagerIsLoaded;
+        }
+
+        public static void LoadUtil()
+        {
+            if (UtilLoaded) return;
+
+            _utilHarmony = new Harmony(UtilHarmonyId);
+            PatchGroup(_utilHarmony, typeof(Patches.Util.Util));
+
+            Util.PopulateDefaultClassAttributes();
+
+            UtilLoaded = true;
+            Plugin.Log.LogInfo("Util loaded");
+        }
 
         // ---------------- Balance ----------------
 
@@ -109,6 +130,7 @@ namespace BalancePatch
             PatchGroup(_boostedHarmony, typeof(Patches.Boosted.BoostedPatch));
 
             BoostedPatch.PrintConfig();
+            BoostedPatch.PopulateSpellModifierTable();
 
             BoostedLoaded = true;
             Plugin.Log.LogInfo("Boosted patches loaded");
