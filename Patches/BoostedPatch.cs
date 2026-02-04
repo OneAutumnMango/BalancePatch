@@ -51,7 +51,8 @@ namespace Patches.Boosted
             }
         }
 
-        public static readonly Tier Common = new(1.00f, 0.25f, -0.10f);
+        // public static readonly Tier Common = new(1.00f, 0.25f, -0.10f);
+        public static readonly Tier Common = new(1.00f, 3f, -0.70f);
         public static readonly Tier Rare = new(0.25f, 0.50f, -0.20f);
         public static readonly Tier Legendary = new(0.05f, 0.75f, -0.30f);
 
@@ -76,6 +77,7 @@ namespace Patches.Boosted
         private static readonly string[] SpellTableKeys = ["cooldown", "windUp", "windDown", "initialVelocity", "spellRadius"];
         // private static Dictionary<SpellName, Dictionary<String, Dictionary<String, float>>> SpellModifierTable = [];
         public static Dictionary<SpellName, SpellModifiers> SpellModifierTable = [];
+        public static int numUpgradesPerRound = 10;
 
         public class UpgradeOption
         {
@@ -87,15 +89,15 @@ namespace Patches.Boosted
             {
                 string attrDisplay = Attribute switch
                 {
-                    "DAMAGE" => "Damage",
-                    "RADIUS" => "Impact Radius",
-                    "POWER" => "Knockback",
-                    "Y_POWER" => "Knockup",
-                    "cooldown" => "Cooldown",
-                    "windUp" => "Wind Up",
-                    "windDown" => "Wind Down",
+                    "DAMAGE"          => "Damage",
+                    "RADIUS"          => "Impact Radius",
+                    "POWER"           => "Knockback",
+                    "Y_POWER"         => "Knockup",
+                    "cooldown"        => "Cooldown",
+                    "windUp"          => "Wind Up",
+                    "windDown"        => "Wind Down",
                     "initialVelocity" => "Initial Velocity",
-                    "spellRadius" => "Projectile Radius",
+                    "spellRadius"     => "Projectile Radius",
                     _ => Attribute
                 };
                 return $"{Spell}: {attrDisplay}";
@@ -110,6 +112,35 @@ namespace Patches.Boosted
 
             if (prop?.GetValue(mods) is AttributeModifier attrMod)
                 attrMod.Mult += mod;
+        }
+
+        // for display
+        public static bool TryGetUpDownMultFromOption(UpgradeOption option, out float upMult, out float downMult)
+        {
+            upMult = 0;
+            downMult = 0;
+
+            if (!TryGetMultFromOption(option, out float mult))
+                return false;
+
+            upMult = mult + option.Tier.Up;
+            downMult = mult + option.Tier.Down;
+            return true;
+        }
+
+        private static bool TryGetMultFromOption(UpgradeOption option, out float mult)
+        {
+            mult = 0;
+
+            if (!SpellModifierTable.TryGetValue(option.Spell, out var mods))
+                return false;
+
+            var prop = typeof(SpellModifiers).GetProperty(option.Attribute);
+            if (prop?.GetValue(mods) is not AttributeModifier attrMod)
+                return false;
+
+            mult = attrMod.Mult;
+            return true;
         }
 
         public static List<SpellName> GetPlayerSpells(Player player) =>
@@ -147,12 +178,17 @@ namespace Patches.Boosted
                 int index = rng.Next(possibleUpgrades.Count);
                 var (spell, attr) = possibleUpgrades[index];
                 possibleUpgrades.RemoveAt(index);
-                options.Add(new UpgradeOption
+                UpgradeOption option = new UpgradeOption
                 {
                     Spell = spell,
                     Attribute = attr,
                     Tier = Upgrades.GetRandom()
-                });
+                };
+
+                if (TryGetMultFromOption(option, out float mult) && mult == 0)
+                    continue;
+
+                options.Add(option);
             }
             return options;
         }
@@ -161,35 +197,23 @@ namespace Patches.Boosted
         {
             foreach (SpellName name in Util.Util.DefaultSpellTable.Keys)
             {
+                Plugin.Log.LogInfo($"[BoostedPatch] Populating modifiers for {name}");
                 var spell = Util.Util.DefaultSpellTable[name];
                 var classAttrs = Util.Util.DefaultClassAttributes[name];
 
                 SpellModifierTable[name] = new SpellModifiers
                 {
-                    DAMAGE = new AttributeModifier(classAttrs["DAMAGE"]),
-                    RADIUS = new AttributeModifier(classAttrs["RADIUS"]),
-                    POWER = new AttributeModifier(classAttrs["POWER"]),
-                    Y_POWER = new AttributeModifier(classAttrs["Y_POWER"]),
-                    cooldown = new AttributeModifier(spell.cooldown),
-                    windUp = new AttributeModifier(spell.windUp),
-                    windDown = new AttributeModifier(spell.windDown),
+                    DAMAGE          = new AttributeModifier(classAttrs["DAMAGE"]),
+                    RADIUS          = new AttributeModifier(classAttrs["RADIUS"]),
+                    POWER           = new AttributeModifier(classAttrs["POWER"]),
+                    Y_POWER         = new AttributeModifier(classAttrs["Y_POWER"]),
+                    cooldown        = new AttributeModifier(spell.cooldown),
+                    windUp          = new AttributeModifier(spell.windUp),
+                    windDown        = new AttributeModifier(spell.windDown),
                     initialVelocity = new AttributeModifier(spell.initialVelocity),
-                    spellRadius = new AttributeModifier(spell.spellRadius)
+                    spellRadius     = new AttributeModifier(spell.spellRadius)
                 };
             }
-
-            // string inline = "{" + string.Join(", ",
-            // SpellModifierTable.Select(spellKvp =>
-            //     $"\"{spellKvp.Key}\": {{" +
-            //     string.Join(", ", spellKvp.Value.Select(classKvp =>
-            //         $"\"{classKvp.Key}\": {{" +
-            //         string.Join(", ", classKvp.Value.Select(statKvp => $"\"{statKvp.Key}\": {statKvp.Value}")) +
-            //         "}"
-            //     )) +
-            //     "}"
-            // )) + "}";
-
-            // Plugin.Log.LogInfo(inline);
         }
 
         public static void ApplyModifiersToSpellTable(SpellManager spellManager)
@@ -201,11 +225,11 @@ namespace Patches.Boosted
 
                 if (spellManager.spell_table.TryGetValue(name, out Spell spell))
                 {
-                    spell.cooldown = mods.cooldown;
-                    spell.windUp = mods.windUp;
-                    spell.windDown = mods.windDown;
+                    spell.cooldown        = mods.cooldown;
+                    spell.windUp          = mods.windUp;
+                    spell.windDown        = mods.windDown;
                     spell.initialVelocity = mods.initialVelocity;
-                    spell.spellRadius = mods.spellRadius;
+                    spell.spellRadius     = mods.spellRadius;
                 }
             }
         }
@@ -250,17 +274,16 @@ namespace Patches.Boosted
         private static void Prefix_SpellObjectInit(object __instance)
         {
             Type t = __instance.GetType();
-            var matchedSpell = Enum.GetValues(typeof(SpellName))
-                .Cast<SpellName>()
-                .FirstOrDefault(name => Util.Util.GetSpellObjectTypeName(name) == t.Name);
+            var matchedSpell = Util.Util.GetSpellNameFromTypeName(t.Name);
 
-            if (!SpellModifierTable.TryGetValue(matchedSpell, out var mods)) return;
+            if (!SpellModifierTable.TryGetValue(matchedSpell.Value, out var mods)) return;
 
             BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-            t.GetField("DAMAGE", flags)?.SetValue(__instance, (float)mods.DAMAGE);
-            t.GetField("RADIUS", flags)?.SetValue(__instance, (float)mods.RADIUS);
-            t.GetField("POWER", flags)?.SetValue(__instance, (float)mods.POWER);
+            Plugin.Log.LogInfo($"[BoostedPatch] Patching SpellObject {t.Name} with modifiers: dmg: {mods.DAMAGE}, rad: {mods.RADIUS}, pow: {mods.POWER}, y_pow: {mods.Y_POWER}");
+            t.GetField("DAMAGE" , flags)?.SetValue(__instance, (float)mods.DAMAGE);
+            t.GetField("RADIUS" , flags)?.SetValue(__instance, (float)mods.RADIUS);
+            t.GetField("POWER"  , flags)?.SetValue(__instance, (float)mods.POWER);
             t.GetField("Y_POWER", flags)?.SetValue(__instance, (float)mods.Y_POWER);
         }
     }
@@ -273,18 +296,6 @@ namespace Patches.Boosted
     //         cooldown = 100f;
     //     }
     // }
-    [HarmonyPatch(typeof(SpellManager), "Awake")]
-    public static class Patch_SpellManager_GetManagerInstance
-    {
-        public static SpellManager mgr;
-
-        static void Postfix(SpellManager __instance)
-        {
-            mgr = __instance ?? Globals.spell_manager;
-        }
-    }
-
-
 
     // ROUND WATCHER
     [HarmonyPatch(typeof(NetworkManager), "CombineRoundScores")]
@@ -299,9 +310,9 @@ namespace Patches.Boosted
 
         private static void Postfix()
         {
-            if (Patch_SpellManager_GetManagerInstance.mgr != null)
+            if (Util.Util.mgr != null)
             {
-                BoostedPatch.ApplyModifiersToSpellTable(Patch_SpellManager_GetManagerInstance.mgr);
+                BoostedPatch.ApplyModifiersToSpellTable(Util.Util.mgr);
                 Plugin.Log.LogInfo("[RoundWatcher] Applied spell modifiers to spell table");
             }
 
@@ -312,7 +323,7 @@ namespace Patches.Boosted
 
                 BoostedPatch.ApplyModifiersToPlayer(player);  // update player cooldowns
 
-                var options = BoostedPatch.GenerateUpgradeOptions(player, 5);
+                var options = BoostedPatch.GenerateUpgradeOptions(player, BoostedPatch.numUpgradesPerRound);
                 Plugin.CurrentUpgradeOptions.Clear();
                 Plugin.CurrentUpgradeOptions.AddRange(options);  // thread safe
 

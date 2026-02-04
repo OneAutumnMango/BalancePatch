@@ -14,12 +14,15 @@ namespace BalancePatch
         public static System.Random Random = new();
         public static System.Collections.Generic.List<Patches.Boosted.BoostedPatch.UpgradeOption> CurrentUpgradeOptions = [];
 
+        private static GUIStyle Green, Red;
+
         private void Awake()
         {
             Log = Logger;
             Log.LogInfo("Balance Patch loaded");
 
             Loader.LoadUtil();
+            InitColors();
         }
 
         private void OnGUI()
@@ -82,6 +85,11 @@ namespace BalancePatch
             }
             else
             {
+                // if (Loader.BoostedWaiting)
+                // {
+                //     GUI.Label(new Rect(x2 + textW + spacing, y1, w, h), "Waiting for SpellManager");
+                // }
+                // else
                 if (GUI.Button(new Rect(x2 + textW + spacing, y1, w, h), "Load Boosted"))
                     Loader.LoadBoosted();
             }
@@ -90,7 +98,6 @@ namespace BalancePatch
             // ---------------- Upgrade Options ----------------
             if (CurrentUpgradeOptions.Count > 0)
             {
-                Log.LogInfo($"[Plugin] Displaying {CurrentUpgradeOptions.Count} upgrade options");
                 int upgradeX = 20;
                 int upgradeY = Screen.height / 2 - 100;
                 int optionHeight = 35;
@@ -106,13 +113,16 @@ namespace BalancePatch
 
                     GUI.Label(new Rect(upgradeX, yPos, labelWidth, 30), option.GetDisplayText());
 
-                    if (GUI.Button(new Rect(upgradeX + labelWidth, yPos, buttonWidth, 30), $"+{option.Tier.Up * 100:F0}%"))
+                    if (!Patches.Boosted.BoostedPatch.TryGetUpDownMultFromOption(option, out float upMult, out float downMult))
+                        continue;
+
+                    if (GUI.Button(new Rect(upgradeX + labelWidth, yPos, buttonWidth, 30), $"{upMult * 100:F0}%", Green))
                     {
                         Patches.Boosted.BoostedPatch.ApplyUpgrade(option, true);
                         CurrentUpgradeOptions.Clear();
                     }
 
-                    if (GUI.Button(new Rect(upgradeX + labelWidth + buttonWidth, yPos, buttonWidth, 30), $"{option.Tier.Down * 100:F0}%"))
+                    if (GUI.Button(new Rect(upgradeX + labelWidth + buttonWidth, yPos, buttonWidth, 30), $"{downMult * 100:F0}%", Red))
                     {
                         Patches.Boosted.BoostedPatch.ApplyUpgrade(option, false);
                         CurrentUpgradeOptions.Clear();
@@ -136,6 +146,24 @@ namespace BalancePatch
                 }
                 return hash;
             }
+        }
+
+        private static void InitColors()
+        {
+            Color upColor = new Color(0.3f, 0.85f, 0.3f);
+            Color downColor = new Color(0.9f, 0.3f, 0.3f);
+
+            Green = new GUIStyle(GUI.skin.button);
+            Green.normal.textColor  = upColor;
+            Green.hover.textColor   = upColor;
+            Green.active.textColor  = upColor;
+            Green.focused.textColor = upColor;
+
+            Red = new GUIStyle(GUI.skin.button);
+            Red.normal.textColor  = downColor;
+            Red.hover.textColor   = downColor;
+            Red.active.textColor  = downColor;
+            Red.focused.textColor = downColor;
         }
     }
 }

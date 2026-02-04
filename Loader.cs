@@ -4,6 +4,8 @@ using Patches.Boosted;
 using Patches.Util;
 using System;
 using System.Reflection;
+using UnityEngine;
+using System.Threading;
 
 namespace BalancePatch
 {
@@ -25,6 +27,7 @@ namespace BalancePatch
         public static bool DebugLoaded { get; private set; }
         public static bool RandomiserLoaded { get; private set; }
         public static bool BoostedLoaded { get; private set; }
+        // public static bool BoostedWaiting { get; private set; }
         public static bool UtilLoaded { get; private set; }
         public static bool SpellManagerLoaded()
         {
@@ -129,7 +132,10 @@ namespace BalancePatch
             _boostedHarmony = new Harmony(BoostedHarmonyId);
             PatchGroup(_boostedHarmony, typeof(Patches.Boosted.BoostedPatch));
 
+            if (!SpellManagerLoaded())
+                Plugin.Log.LogError("SpellManager is not loaded. Boosted patches will break.");
             BoostedPatch.PopulateSpellModifierTable();
+            BoostedPatch.PatchAllSpellObjects(_boostedHarmony);
 
             BoostedLoaded = true;
             Plugin.Log.LogInfo("Boosted patches loaded");

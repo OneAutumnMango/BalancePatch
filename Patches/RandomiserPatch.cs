@@ -35,11 +35,11 @@ namespace Patches.Randomiser
                             ? oldValue => NextGaussian(rng, oldValue, 0.1f * oldValue)
                             : oldValue => RandomTweak(rng, oldValue);
 
-                    spell.cooldown = tweakFunc(spell.cooldown);
-                    spell.windUp = Math.Min(tweakFunc(spell.windUp), spell.windUp * bound);
-                    spell.windDown = Math.Min(tweakFunc(spell.windDown), spell.windDown * bound);
+                    spell.cooldown =                 tweakFunc(spell.cooldown);
+                    spell.windUp =          Math.Min(tweakFunc(spell.windUp), spell.windUp * bound);
+                    spell.windDown =        Math.Min(tweakFunc(spell.windDown), spell.windDown * bound);
                     spell.initialVelocity = Math.Max(tweakFunc(spell.initialVelocity), spell.initialVelocity / bound);
-                    spell.spellRadius = tweakFunc(spell.spellRadius);
+                    spell.spellRadius =              tweakFunc(spell.spellRadius);
                 }
             }
         }

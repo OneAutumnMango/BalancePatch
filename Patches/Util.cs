@@ -15,6 +15,20 @@ namespace Patches.Util
         public static Dictionary<SpellName, Dictionary<string, float>> DefaultClassAttributes = [];
         public static Dictionary<SpellName, Spell> DefaultSpellTable = [];
         public static bool spellManagerIsLoaded = false;
+        public static SpellManager mgr;
+
+        static void Postfix(SpellManager __instance)
+        {
+            mgr = __instance ?? Globals.spell_manager;
+            if (mgr == null || mgr.spell_table == null) return;
+
+            Plugin.Log.LogInfo("SpellManager is loaded.");
+            spellManagerIsLoaded = true;
+
+            Plugin.Log.LogInfo("Populating default spell table.");
+            DefaultSpellTable = mgr.spell_table.ToDictionary(kvp => kvp.Key, kvp => new Spell(kvp.Value));
+        }
+
 
         public static string GetSpellObjectTypeName(SpellName name)
         {
@@ -23,8 +37,22 @@ namespace Patches.Util
                 SpellName.RockBlock => "StonewallObject",
                 SpellName.FlameLeash => "BurningLeashObject",
                 SpellName.SomerAssault => "SomAssaultObject",
-                SpellName.Suspend => "SuspendObjectObject",
+                SpellName.Sustain => "SustainObjectObject",
                 _ => $"{name}Object"
+            };
+        }
+
+        public static SpellName? GetSpellNameFromTypeName(string typeName)
+        {
+            return typeName switch
+            {
+                "StonewallObject"     => SpellName.RockBlock,
+                "BurningLeashObject"  => SpellName.FlameLeash,
+                "SomAssaultObject"    => SpellName.SomerAssault,
+                "SustainObjectObject" => SpellName.Sustain,
+                _ => Enum.GetValues(typeof(SpellName))
+                    .Cast<SpellName?>()
+                    .FirstOrDefault(name => $"{name}Object" == typeName)
             };
         }
 
@@ -65,19 +93,5 @@ namespace Patches.Util
                 DefaultClassAttributes[name] = values;
             }
         }
-
-        public static SpellManager mgr;
-
-        static void Postfix(SpellManager __instance)
-        {
-            mgr = __instance ?? Globals.spell_manager;
-            if (mgr == null || mgr.spell_table == null) return;
-
-            spellManagerIsLoaded = true;
-
-            DefaultSpellTable = mgr.spell_table.ToDictionary(kvp => kvp.Key, kvp => new Spell(kvp.Value));
-        }
-
-
     }
 }
