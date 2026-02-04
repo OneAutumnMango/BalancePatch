@@ -16,6 +16,9 @@ namespace BalancePatch
 
         private static GUIStyle Green, Red;
 
+        private int upgradesSelected = 0;
+        private int MaxUpgrades = 3;
+
         private void Awake()
         {
             Log = Logger;
@@ -119,14 +122,12 @@ namespace BalancePatch
 
                     if (GUI.Button(new Rect(upgradeX + labelWidth, yPos, buttonWidth, 30), $"{upMult * 100:F0}%", Green))
                     {
-                        Patches.Boosted.BoostedPatch.ApplyUpgrade(option, true);
-                        CurrentUpgradeOptions.Clear();
+                        SelectUpgrade(option, true);
                     }
 
                     if (GUI.Button(new Rect(upgradeX + labelWidth + buttonWidth, yPos, buttonWidth, 30), $"{downMult * 100:F0}%", Red))
                     {
-                        Patches.Boosted.BoostedPatch.ApplyUpgrade(option, false);
-                        CurrentUpgradeOptions.Clear();
+                        SelectUpgrade(option, false);
                     }
                 }
             }
@@ -149,10 +150,26 @@ namespace BalancePatch
             }
         }
 
+        void SelectUpgrade(Patches.Boosted.BoostedPatch.UpgradeOption option, bool isUp)
+        {
+            Patches.Boosted.BoostedPatch.ApplyUpgrade(option, isUp);
+            upgradesSelected++;
+
+            // Optional: prevent selecting the same upgrade again
+            CurrentUpgradeOptions.Remove(option);
+
+            if (upgradesSelected >= MaxUpgrades)
+            {
+                CurrentUpgradeOptions.Clear();
+                upgradesSelected = 0; // reset for next time
+            }
+        }
+
+
         private static void InitColors()
         {
-            Color upColor = new Color(0.3f, 0.85f, 0.3f);
-            Color downColor = new Color(0.9f, 0.3f, 0.3f);
+            Color upColor = new(0.3f, 0.85f, 0.3f);
+            Color downColor = new(0.9f, 0.3f, 0.3f);
 
             Green = new GUIStyle(GUI.skin.button);
             Green.normal.textColor  = upColor;
