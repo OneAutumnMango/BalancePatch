@@ -181,12 +181,12 @@ namespace Patches.Boosted
         private static bool TryGetDefaultValueFromSpellTable(SpellName name, string attribute, out float value)
         {
             value = 0;
-            if (!Util.Util.DefaultSpellTable.TryGetValue(name, out var spell)) return false;
+            if (!SpellModifierTable.TryGetValue(name, out var spellModifier)) return false;
 
-            var prop = typeof(Spell).GetProperty(attribute);
-            if (prop?.GetValue(spell) is float val)
+            var prop = typeof(SpellModifiers).GetProperty(attribute);
+            if (prop?.GetValue(spellModifier) is AttributeModifier attrMod)
             {
-                value = val;
+                value = attrMod.Base;
                 return true;
             }
             return false;
@@ -214,9 +214,12 @@ namespace Patches.Boosted
                 possibleUpgrades.RemoveAt(index);
 
                 if (TryGetDefaultValueFromSpellTable(spell, attr, out float defaultValue) && defaultValue == 0)  // if attribute is 0 ignore it
+                {
+                    i--;
                     continue;
+                }
 
-                options.Add(new UpgradeOption
+                    options.Add(new UpgradeOption
                 {
                     Spell = spell,
                     Attribute = attr,
