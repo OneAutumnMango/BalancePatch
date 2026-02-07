@@ -1,6 +1,7 @@
 using BalancePatch;
 using HarmonyLib;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using UnityEngine;
@@ -291,6 +292,41 @@ namespace Patches.Balance
                 }
                 yield return instr;
             }
+        }
+    }
+
+    static class WormholePatchHelper
+    {
+        private static readonly float speedBuff = 2f;
+        private static WizardController wc;
+
+        public static void localSpellObjectStart(GameObject wizard, float duration = 5f)
+        {
+            wc = wizard.GetComponent<WizardController>();
+            applySpeedBuff();
+
+            wizard.GetComponent<MonoBehaviour>().StartCoroutine(RemoveBuffAfterDelay(duration));
+        }
+
+        private static IEnumerator RemoveBuffAfterDelay(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            removeSpeedBuff();
+        }
+
+        private static Action applySpeedBuff = () => wc.MOVEMENT_SPEED *= speedBuff;
+        private static Action removeSpeedBuff = () => wc.MOVEMENT_SPEED /= speedBuff;
+    }
+
+    [HarmonyPatch(typeof(WormholeObject), "Init")]
+    static class Patch_WormholeObject_Init
+    {
+        static bool Prefix(WormholeObject __instance, Identity identity, int spellIndex, SpellName spellNameForCooldown)
+        {
+            WormholePatchHelper.localSpellObjectStart(identity.gameObject);
+            global::UnityEngine.Object.Destroy(__instance.gameObject);
+
+            return false;
         }
     }
 }

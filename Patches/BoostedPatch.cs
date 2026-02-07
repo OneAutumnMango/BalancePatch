@@ -268,6 +268,14 @@ namespace Patches.Boosted
                     spell.windUp          = mods.windUp;
                     spell.windDown        = mods.windDown;
                     spell.initialVelocity = mods.initialVelocity;
+
+                    if (spell.additionalCasts == null)
+                        continue;
+
+                    for (int i = 0; i < spell.additionalCasts.Length; i++)
+                    {
+                        spell.additionalCasts[i].cooldown = mods.cooldown;
+                    }
                 }
             }
         }
@@ -282,6 +290,14 @@ namespace Patches.Boosted
                 if (SpellModifierTable.TryGetValue(name, out SpellModifiers spellMods))
                 {
                     playerCooldown.cooldown = spellMods.cooldown;
+
+                    if (playerCooldown.subCooldowns == null)
+                        continue;
+
+                    for (int i = 0; i < playerCooldown.subCooldowns.Length; i++)
+                    {
+                        playerCooldown.subCooldowns[i].cooldown = spellMods.cooldown;
+                    }
                 }
             }
         }
