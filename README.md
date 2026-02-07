@@ -76,7 +76,6 @@ Added a randomiser to randomise the following:
 - Cooldowns (not of recasts)
 - Animation WindUp and WindDown
 - Spell Velocity
-- Projectile Size
 - Damage
 - Hitbox Radius
 - X and Y Knockback

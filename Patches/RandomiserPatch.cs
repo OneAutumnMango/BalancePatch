@@ -38,7 +38,6 @@ namespace Patches.Randomiser
                     spell.windUp =          Math.Min(tweakFunc(spell.windUp), spell.windUp * bound);
                     spell.windDown =        Math.Min(tweakFunc(spell.windDown), spell.windDown * bound);
                     spell.initialVelocity = Math.Max(tweakFunc(spell.initialVelocity), spell.initialVelocity / bound);
-                    spell.spellRadius =              tweakFunc(spell.spellRadius);
                 }
             }
         }

@@ -37,8 +37,6 @@ namespace Patches.Boosted
         public AttributeModifier windUp { get; set; }
         public AttributeModifier windDown { get; set; }
         public AttributeModifier initialVelocity { get; set; }
-        public AttributeModifier spellRadius { get; set; }
-
         public void ResetMultipliers()
         {
             DAMAGE.ResetMultiplier();
@@ -49,7 +47,6 @@ namespace Patches.Boosted
             windUp.ResetMultiplier();
             windDown.ResetMultiplier();
             initialVelocity.ResetMultiplier();
-            spellRadius.ResetMultiplier();
         }
     }
 
@@ -91,7 +88,7 @@ namespace Patches.Boosted
     public static class BoostedPatch
     {
         private static readonly string[] ClassAttributeKeys = ["DAMAGE", "RADIUS", "POWER", "Y_POWER"];
-        private static readonly string[] SpellTableKeys = ["cooldown", "windUp", "windDown", "initialVelocity", "spellRadius"];
+        private static readonly string[] SpellTableKeys = ["cooldown", "windUp", "windDown", "initialVelocity"];
         // private static Dictionary<SpellName, Dictionary<String, Dictionary<String, float>>> SpellModifierTable = [];
         public static Dictionary<SpellName, SpellModifiers> SpellModifierTable = [];
         public static int numUpgradesPerRound = 10;
@@ -114,7 +111,6 @@ namespace Patches.Boosted
                     "windUp"          => "Wind Up",
                     "windDown"        => "Wind Down",
                     "initialVelocity" => "Initial Velocity",
-                    "spellRadius"     => "Projectile Radius",
                     _ => Attribute
                 };
                 return $"{Spell}: {attrDisplay}";
@@ -172,7 +168,7 @@ namespace Patches.Boosted
         {
             ApplyTier(option.Spell, option.Attribute, option.Tier, isPositive);
 
-            ApplyModifiers(Globals.spell_manager, PlayerManager.players.Values.FirstOrDefault(p => p.localPlayerNumber == 0));
+            ApplyModifiers(Globals.spell_manager, PlayerManager.players.Values.FirstOrDefault(p => p.localPlayerNumber >= 0));
 
             float change = isPositive ? option.Tier.Up : option.Tier.Down;
             Plugin.Log.LogInfo($"[BoostedPatch.ApplyUpgrade] Applied {(isPositive ? "+" : "")}{change * 100:F0}% to {option.GetDisplayText()}");
@@ -219,6 +215,11 @@ namespace Patches.Boosted
                     i--;
                     continue;
                 }
+                else
+                {
+                    bool o = TryGetDefaultValueFromSpellTable(spell, attr, out float val);
+                    Plugin.Log.LogInfo($"[BoostedPatch.GenerateUpgradeOptions] TryGetDefaultValueFromSpellTable: ret: {o}, val: {val}");
+                }
 
                 options.Add(new UpgradeOption
                 {
@@ -247,7 +248,6 @@ namespace Patches.Boosted
                     windUp          = new AttributeModifier(spell.windUp),
                     windDown        = new AttributeModifier(spell.windDown),
                     initialVelocity = new AttributeModifier(spell.initialVelocity),
-                    spellRadius     = new AttributeModifier(spell.spellRadius)
                 };
             }
         }
@@ -265,7 +265,6 @@ namespace Patches.Boosted
                     spell.windUp          = mods.windUp;
                     spell.windDown        = mods.windDown;
                     spell.initialVelocity = mods.initialVelocity;
-                    spell.spellRadius     = mods.spellRadius;
                 }
             }
         }
@@ -382,7 +381,7 @@ namespace Patches.Boosted
 
             if (PlayerManager.round > 0)
             {
-                Player player = PlayerManager.players.Values.FirstOrDefault(p => p.localPlayerNumber == 0);
+                Player player = PlayerManager.players.Values.FirstOrDefault(p => p.localPlayerNumber >= 0);  // hoping >= 0 is always the local player
                 if (player == null)
                 {
                     Plugin.Log.LogError("[NetworkManager.CombineRoundScores] No local player found");
