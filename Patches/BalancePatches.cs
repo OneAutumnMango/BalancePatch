@@ -321,7 +321,7 @@ namespace Patches.Balance
     [HarmonyPatch(typeof(WormholeObject), "Init")]
     static class Patch_WormholeObject_Init
     {
-        static bool Prefix(WormholeObject __instance, Identity identity, int spellIndex, SpellName spellNameForCooldown)
+        static bool Prefix(WormholeObject __instance, Identity identity)
         {
             WormholePatchHelper.localSpellObjectStart(identity.gameObject);
             global::UnityEngine.Object.Destroy(__instance.gameObject);

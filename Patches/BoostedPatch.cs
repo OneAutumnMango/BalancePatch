@@ -197,6 +197,7 @@ namespace Patches.Boosted
             var possibleUpgrades = new List<(SpellName spell, string attr)>();
             foreach (var spell in spells)
             {
+                if (Loader.BalanceLoaded && spell == SpellName.Wormhole) continue;  // ignore wormhole if balance patch loaded
                 foreach (var attr in allAttributes)
                 {
                     if (!Plugin.BannedUpgrades.Contains((spell, attr)))
