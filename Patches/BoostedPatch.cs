@@ -4,6 +4,7 @@ using System.Reflection;
 using BalancePatch;
 using System;
 using System.Linq;
+using System.Reflection.Emit;
 
 
 namespace Patches.Boosted
@@ -34,6 +35,7 @@ namespace Patches.Boosted
         public AttributeModifier windUp { get; set; }
         public AttributeModifier windDown { get; set; }
         public AttributeModifier initialVelocity { get; set; }
+        public AttributeModifier HEAL { get; set; }  // made up
         public void ResetMultipliers()
         {
             DAMAGE.ResetMultiplier();
@@ -44,6 +46,7 @@ namespace Patches.Boosted
             windUp.ResetMultiplier();
             windDown.ResetMultiplier();
             initialVelocity.ResetMultiplier();
+            HEAL.ResetMultiplier();
         }
     }
 
@@ -90,7 +93,9 @@ namespace Patches.Boosted
     {
         private static readonly string[] ClassAttributeKeys = ["DAMAGE", "RADIUS", "POWER", "Y_POWER"];
         private static readonly string[] SpellTableKeys = ["cooldown", "windUp", "windDown", "initialVelocity"];
+        private static readonly string[] MadeUpKeys = ["HEAL"];
         public static Dictionary<SpellName, SpellModifiers> SpellModifierTable = [];
+        private static Dictionary<SpellName, string[]> ManualModifierRejections = [];
         public static int numUpgradesPerRound = 10;
 
         public class UpgradeOption
@@ -111,6 +116,7 @@ namespace Patches.Boosted
                     "windUp"          => "Wind Up",
                     "windDown"        => "Wind Down",
                     "initialVelocity" => "Initial Velocity",
+                    "HEAL" => "Healing",
                     _ => Attribute
                 };
                 return $"{Spell}: {attrDisplay}";
@@ -210,6 +216,12 @@ namespace Patches.Boosted
                 return false;
             }
 
+            if (ManualModifierRejections.ContainsKey(spellName) && ManualModifierRejections[spellName].Contains(attribute))
+                return Reject("in rejection list");
+
+            if (spellName != SpellName.FrogOfLife && attribute == "HEAL")
+                return Reject("only Frog of Life can heal");
+
             if (Plugin.BannedUpgrades.Contains((spellName, attribute)))
                 return Reject("banned");
 
@@ -221,7 +233,7 @@ namespace Patches.Boosted
             if (attribute == "cooldown" && mult <= 0.5f)
                 return Reject("cooldown multiplier too low");
 
-            // primary specific
+            // primary specific put nothing below these
             if (!Globals.spell_manager.spell_table.TryGetValue(spellName, out Spell spell))
                 return true;
 
@@ -246,7 +258,7 @@ namespace Patches.Boosted
 
             if (spells.Count == 0) return options;
 
-            var allAttributes = ClassAttributeKeys.Concat(SpellTableKeys).ToArray();
+            var allAttributes = ClassAttributeKeys.Concat(SpellTableKeys).Concat(MadeUpKeys).ToArray();
             var possibleUpgrades = new List<(SpellName spell, string attr)>();
 
             foreach (var spell in spells)
@@ -296,8 +308,19 @@ namespace Patches.Boosted
                     windUp          = new AttributeModifier(spell.windUp),
                     windDown        = new AttributeModifier(spell.windDown),
                     initialVelocity = new AttributeModifier(spell.initialVelocity),
+                    HEAL = name == SpellName.FrogOfLife ? new AttributeModifier(15f) : new AttributeModifier(0)
                 };
             }
+        }
+
+        // list of attributes that should not be allowed to be upgraded, typically because they dont do anything
+        public static void PopulateManualModifierRejections()
+        {
+            ManualModifierRejections[SpellName.FrogOfLife] =
+                ["DAMAGE", "POWER", "Y_POWER"];
+
+            ManualModifierRejections[SpellName.Suspend] =
+                ["DAMAGE", "RADIUS", "POWER", "Y_POWER"];
         }
 
         private static void ApplyModifiersToSpellTable(SpellManager spellManager)
@@ -415,14 +438,42 @@ namespace Patches.Boosted
         }
     }
 
-    // [HarmonyPatch(typeof(Player), "RegisterCooldown")]
-    // public static class Patch_Player_RegisterCooldown_SetDamage
-    // {
-    //     static void Prefix(ref float cooldown)
-    //     {
-    //         cooldown = 100f;
-    //     }
-    // }
+
+    // apply healing mult, replace == 15f check with a >= 15f check
+    [HarmonyPatch(typeof(FrogOfLifeObject), "Heal")]
+    public static class Patch_FrogOfLifeObject_Heal_FloatCompareAndMult
+    {
+        public static void Prefix(ref float amount) =>
+            amount *= BoostedPatch.SpellModifierTable[SpellName.FrogOfLife].HEAL.Mult;
+
+        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var codes = new List<CodeInstruction>(instructions);
+
+            for (int i = 0; i < codes.Count; i++)
+            {
+                // Detect ldarg.1, ldc.r4 15f, ceq
+                if (i + 2 < codes.Count &&
+                    codes[i].opcode == OpCodes.Ldarg_1 &&
+                    codes[i + 1].opcode == OpCodes.Ldc_R4 &&
+                    Math.Abs((float)codes[i + 1].operand - 15f) < 1e-6f &&
+                    codes[i + 2].opcode == OpCodes.Ceq)
+                {
+                    var branchTarget = codes[i + 2].operand;
+
+                    yield return new CodeInstruction(OpCodes.Ldarg_1);
+                    yield return new CodeInstruction(OpCodes.Ldc_R4, 15f);
+                    yield return new CodeInstruction(OpCodes.Bge_S, branchTarget); // branch if amount >= 15*mult
+
+                    i += 2; // skip original ldarg, ldc, ceq
+                    continue;
+                }
+
+                yield return codes[i];
+            }
+        }
+    }
+
 
     // ROUND WATCHER
     [HarmonyPatch(typeof(NetworkManager), "CombineRoundScores")]

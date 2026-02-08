@@ -133,6 +133,7 @@ namespace BalancePatch
 
             if (!SpellManagerLoaded())
                 Plugin.Log.LogError("SpellManager is not loaded. Boosted patches will break.");
+            BoostedPatch.PopulateManualModifierRejections();
             BoostedPatch.PopulateSpellModifierTable();
             BoostedPatch.PatchAllSpellObjects(_boostedHarmony);
 
