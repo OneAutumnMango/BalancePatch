@@ -339,4 +339,91 @@ namespace Patches.Balance
             return false;
         }
     }
+
+    // 50% clone hp
+    [HarmonyPatch(typeof(GameUtility), "CreateCloneOfWizard")]
+    public static class Patch_GameUtility_CloneHP
+    {
+        private static readonly float hpMult = 0.5f;
+        static void Postfix(GameObject __result)
+        {
+            if (__result == null) return;
+
+            var status = __result.GetComponent<WizardStatus>();
+            if (status == null) return;
+
+            status.maxHealth *= hpMult;
+            status.health *= hpMult;
+
+            status.health = Math.Max(0.001f, status.health);
+        }
+    }
+
+    // Change max rounds to 30
+    [HarmonyPatch(typeof(SelectionMenu), "ChangeNumberOfRounds")]
+    public static class Patch_SelectionMenu_ChangeNumberOfRounds_Max30
+    {
+        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            foreach (var instr in instructions)
+            {
+                if (instr.opcode == OpCodes.Ldc_I4_S && (sbyte)instr.operand == 20)
+                    instr.operand = (sbyte)30;
+                else if (instr.opcode == OpCodes.Ldc_I4 && (int)instr.operand == 20)
+                    instr.operand = 30;
+                yield return instr;
+            }
+        }
+    }
+
+    // alter competitive mode preset
+    [HarmonyPatch(typeof(SelectionMenu), "ShowPreset")]
+    public static class Patch_SelectionMenu_ShowPreset_ReplaceCompetitive
+    {
+        static bool Prefix(SelectionMenu __instance)
+        {
+            if (PlayerManager.gameSettings.preset != GameModePresets.Competitive)
+                return true;
+
+            PlayerManager.gameSettings.healthMode = HealthMode.High;
+            PlayerManager.gameSettings.mercyRuleMode = MercyRuleMode.Off;
+			PlayerManager.gameSettings.spellSelectionMode = SpellSelectionMode.TwoRoundSnake;
+            PlayerManager.gameSettings.stage = StageName.LessRandom;
+            PlayerManager.gameSettings.elements = new ElementInclusionMode[10];
+			// PlayerManager.gameSettings.elements =
+            // [
+            //     ElementInclusionMode.Possible,
+			// 	ElementInclusionMode.Possible,
+			// 	ElementInclusionMode.Possible,
+			// 	ElementInclusionMode.Possible,
+			// 	ElementInclusionMode.Possible,
+			// 	ElementInclusionMode.Possible,
+			// 	ElementInclusionMode.Possible,
+			// 	ElementInclusionMode.Possible,
+			// 	ElementInclusionMode.Possible,
+			// 	ElementInclusionMode.Banned
+			// ];
+            PlayerManager.gameSettings.numberOfRounds = 30;
+            PlayerManager.finalRound = 30;
+
+            AccessTools.Method(typeof(SelectionMenu), "ShowHealthMode")    ?.Invoke(__instance, null);
+            AccessTools.Method(typeof(SelectionMenu), "ShowMercyRule")     ?.Invoke(__instance, null);
+            AccessTools.Method(typeof(SelectionMenu), "ShowNumberOfRounds")?.Invoke(__instance, null);
+            AccessTools.Method(typeof(SelectionMenu), "ShowStage")         ?.Invoke(__instance, null);
+            AccessTools.Method(typeof(SelectionMenu), "ShowElements")      ?.Invoke(__instance, null);
+
+            var presetsText = AccessTools.Field(typeof(SelectionMenu), "presetsText")?.GetValue(__instance);
+            presetsText?.GetType()
+                .GetProperty("text")
+                ?.SetValue(presetsText, "Real MageQuit");
+
+            var descriptionText = AccessTools.Field(typeof(SelectionMenu), "descriptionText")?.GetValue(__instance);
+            descriptionText?.GetType()
+                .GetProperty("text")
+                ?.SetValue(descriptionText, "Extra long game recommended with Boosted.");
+
+            return false;
+        }
+    }
+
 }

@@ -70,6 +70,9 @@ This mode is NOT compatible with the Randomiser.
 - Echo: cooldown reduced from 5.5s → 5s
 - Wormhole: Gives 1.8x movespeed for 5s instead of previous, 9s cooldown
 
+- All clones HP reduced by 50%
+- Max rounds increased to 30
+
 **Randomiser**:
 
 Added a randomiser to randomise the following:

@@ -233,10 +233,13 @@ namespace Patches.Boosted
             if (attribute == "cooldown" && mult <= 0.5f)
                 return Reject("cooldown multiplier too low");
 
-            // primary specific put nothing below these
             if (!Globals.spell_manager.spell_table.TryGetValue(spellName, out Spell spell))
                 return true;
 
+            if (spell.spellButton == SpellButton.Movement && attribute == "RADIUS" && mult >= 2f)
+                return Reject("movement radius too big");;
+
+            // primary specific put nothing below these
             if (spell.spellButton != SpellButton.Primary)
                 return true;
 
@@ -321,6 +324,9 @@ namespace Patches.Boosted
 
             ManualModifierRejections[SpellName.Suspend] =
                 ["DAMAGE", "RADIUS", "POWER", "Y_POWER"];
+
+            ManualModifierRejections[SpellName.Sapshot] =
+                ["DAMAGE", "RADIUS", "POWER"];
         }
 
         private static void ApplyModifiersToSpellTable(SpellManager spellManager)
@@ -342,7 +348,9 @@ namespace Patches.Boosted
 
                     for (int i = 0; i < spell.additionalCasts.Length; i++)
                     {
-                        spell.additionalCasts[i].cooldown = Util.Util.DefaultSpellTable[name].additionalCasts[i].cooldown * mods.cooldown.Mult;
+                        var subspell = Util.Util.DefaultSpellTable[name].additionalCasts[i];  // SpellMod table doesnt store additional casts
+                        spell.additionalCasts[i].cooldown        = subspell.cooldown        * mods.cooldown.Mult;
+                        spell.additionalCasts[i].initialVelocity = subspell.initialVelocity * mods.initialVelocity.Mult;
                     }
                 }
             }
@@ -473,7 +481,6 @@ namespace Patches.Boosted
             }
         }
     }
-
 
     // ROUND WATCHER
     [HarmonyPatch(typeof(NetworkManager), "CombineRoundScores")]
