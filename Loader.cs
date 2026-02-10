@@ -26,8 +26,10 @@ namespace BalancePatch
         public static bool DebugLoaded { get; private set; }
         public static bool RandomiserLoaded { get; private set; }
         public static bool BoostedLoaded { get; private set; }
-        // public static bool BoostedWaiting { get; private set; }
+        public static bool BoostedWaiting { get; private set; }
         public static bool UtilLoaded { get; private set; }
+        
+        private static UnityEngine.Coroutine _boostedWaitCoroutine;
         public static bool SpellManagerLoaded()
         {
             return Util.spellManagerIsLoaded;
@@ -126,13 +128,38 @@ namespace BalancePatch
 
         public static void LoadBoosted()
         {
+            if (BoostedLoaded || BoostedWaiting) return;
+
+            if (!SpellManagerLoaded())
+            {
+                BoostedWaiting = true;
+                Plugin.Log.LogInfo("SpellManager not loaded yet. Waiting...");
+                _boostedWaitCoroutine = Plugin.Instance.StartCoroutine(WaitForSpellManagerAndLoadBoosted());
+                return;
+            }
+
+            LoadBoostedInternal();
+        }
+
+        private static System.Collections.IEnumerator WaitForSpellManagerAndLoadBoosted()
+        {
+            while (!SpellManagerLoaded())
+            {
+                yield return new UnityEngine.WaitForSeconds(0.5f);
+            }
+
+            Plugin.Log.LogInfo("SpellManager loaded! Loading Boosted...");
+            BoostedWaiting = false;
+            LoadBoostedInternal();
+        }
+
+        private static void LoadBoostedInternal()
+        {
             if (BoostedLoaded) return;
 
             _boostedHarmony = new Harmony(BoostedHarmonyId);
             PatchGroup(_boostedHarmony, typeof(Patches.Boosted.BoostedPatch));
 
-            if (!SpellManagerLoaded())
-                Plugin.Log.LogError("SpellManager is not loaded. Boosted patches will break.");
             BoostedPatch.PopulateManualModifierRejections();
             BoostedPatch.PopulateSpellModifierTable();
             BoostedPatch.PatchAllSpellObjects(_boostedHarmony);
@@ -143,6 +170,13 @@ namespace BalancePatch
 
         public static void UnloadBoosted()
         {
+            if (_boostedWaitCoroutine != null)
+            {
+                Plugin.Instance.StopCoroutine(_boostedWaitCoroutine);
+                _boostedWaitCoroutine = null;
+                BoostedWaiting = false;
+            }
+
             if (!BoostedLoaded) return;
 
             BoostedPatch.ResetSpellModifierTableMults();

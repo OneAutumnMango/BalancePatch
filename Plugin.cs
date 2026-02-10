@@ -8,6 +8,7 @@ namespace BalancePatch
     [BepInPlugin("org.bepinex.plugins.balancepatch", "Balance Patch", "1.0.0")]
     public class Plugin : BaseUnityPlugin
     {
+        public static Plugin Instance { get; private set; }
         public static ManualLogSource Log;
 
         public static string seed = "";
@@ -20,15 +21,14 @@ namespace BalancePatch
         private static GUIStyle Green, Red;
         private static GUIStyle CommonStyle, RareStyle, LegendaryStyle;
 
-
         private int upgradesSelected = 0;
         private readonly int MaxUpgrades = 3;
-        private bool showSpellManagerError = false;
         private int freeBans = 1;  // per round
 
 
         private void Awake()
         {
+            Instance = this;
             Log = Logger;
             Log.LogInfo("Balance Patch loaded");
 
@@ -88,7 +88,8 @@ namespace BalancePatch
             // Restore GUI
             GUI.enabled = true;
 
-            if (Loader.BoostedLoaded)
+            // ---------------- Boosted ----------------
+            if (Loader.BoostedLoaded || Loader.BoostedWaiting)
             {
                 if (GUI.Button(new Rect(x2 + textW + spacing, y1, w, h), "Unload Boosted"))
                     Loader.UnloadBoosted();
@@ -97,37 +98,8 @@ namespace BalancePatch
             {
                 if (GUI.Button(new Rect(x2 + textW + spacing, y1, w, h), "Load Boosted"))
                 {
-                    if (!Loader.SpellManagerLoaded())
-                    {
-                        showSpellManagerError = true;
-                    }
-                    else
-                    {
-                        showSpellManagerError = false;
-                        Loader.LoadBoosted();
-                    }
+                    Loader.LoadBoosted();
                 }
-            }
-            if (showSpellManagerError)
-            {
-                string message;
-                GUIStyle color;
-                if (!Loader.SpellManagerLoaded())
-                {
-                    message = "SpellManager not loaded.\nWait until a game starts.";
-                    color = Red;
-                }
-                else
-                {
-                    message = "SpellManager loaded.\nPress 'Load Boosted' now.";
-                    color = Green;
-                }
-
-                GUI.Label(
-                    new Rect(x2 + textW + spacing*2 + w, y1, 170, h * 2),
-                    message,
-                    color
-                );
             }
 
             // ---------------- Upgrade Options ----------------
