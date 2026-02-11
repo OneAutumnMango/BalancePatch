@@ -40,8 +40,6 @@
 			<HintPath>lib\UnityEngine.PhysicsModule.dll</HintPath>
 		</Reference>
 
-		<ProjectReference Include="..\MageQuitModFramework\MageQuitModFramework\MageQuitModFramework.csproj" />
-
 		<Reference Include="UnityEngine.VideoModule">
 			<HintPath>lib\UnityEngine.VideoModule.dll</HintPath>
 		</Reference>
@@ -50,6 +48,16 @@
 			<HintPath>lib\UnityEngine.IMGUIModule.dll</HintPath>
 		</Reference>
 	</ItemGroup>
+
+	<ItemGroup Condition="Exists('..\MageQuitModFramework\MageQuitModFramework\MageQuitModFramework.csproj')">
+		<ProjectReference Include="..\MageQuitModFramework\MageQuitModFramework\MageQuitModFramework.csproj" />
+	</ItemGroup>
+	
+	<ItemGroup Condition="!Exists('..\MageQuitModFramework\MageQuitModFramework\MageQuitModFramework.csproj')">
+		<Reference Include="MageQuitModFramework">
+			<HintPath>lib\MageQuitModFramework.dll</HintPath>
+		</Reference>
+	</ItemGroup>	
 
 	<PropertyGroup>
 		<BepInExPluginDir>

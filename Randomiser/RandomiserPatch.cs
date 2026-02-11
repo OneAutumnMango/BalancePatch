@@ -67,7 +67,7 @@ namespace BalancePatch.Randomiser
             var rng = Plugin.RandomiserRng;
             string[] tweakFields = ["DAMAGE", "RADIUS", "POWER", "Y_POWER"];
 
-            PrecomputedSpellValues = GameModificationHelpers.PrecomputeSpellAttributes(tweakFields, (fieldName, original) =>
+            PrecomputedSpellValues = RandomiserHelpers.PrecomputeSpellAttributes(tweakFields, (fieldName, original) =>
             {
                 float tweaked = RandomTweak(rng, original);
                 
