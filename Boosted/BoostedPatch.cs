@@ -17,6 +17,7 @@ namespace MageKit.Boosted
         private static readonly string[] CustomKeys = ["HEAL"];
 
         private static Dictionary<SpellName, string[]> ManualModifierRejections = [];
+        private static SpellModifierTable _boostedTable;
         public static int numUpgradesPerRound = 10;
 
         public class UpgradeOption
@@ -72,15 +73,13 @@ namespace MageKit.Boosted
 
         public static void PopulateSpellModifierTable()
         {
-            SpellModificationSystem.Initialize(
-                GameDataInitializer.DefaultSpellTable,
-                GameDataInitializer.DefaultClassAttributes
-            );
+            _boostedTable = SpellModificationSystem.RegisterTable("boosted");
+            Plugin.Log.LogInfo("[Boosted] Initialized spell modifier table");
         }
 
         public static void ResetSpellModifierTableMults()
         {
-            SpellModificationSystem.ResetAllMultipliers();
+            _boostedTable?.ResetAllMultipliers();
         }
 
         public static bool TryGetUpDownMultFromOption(UpgradeOption option, out float upMult, out float downMult)
@@ -88,7 +87,7 @@ namespace MageKit.Boosted
             upMult = 0;
             downMult = 0;
 
-            if (!SpellModificationSystem.TryGetMultiplier(option.Spell, option.Attribute, out float mult))
+            if (_boostedTable == null || !_boostedTable.TryGetMultiplier(option.Spell, option.Attribute, out float mult))
                 return false;
 
             upMult = mult + option.Tier.Up;
@@ -99,10 +98,14 @@ namespace MageKit.Boosted
         public static void ApplyUpgrade(UpgradeOption option, bool isPositive)
         {
             float change = isPositive ? option.Tier.Up : option.Tier.Down;
-            SpellModificationSystem.TryUpdateModifier(option.Spell, option.Attribute, change);
+            _boostedTable?.TryAddToModifier(option.Spell, option.Attribute, change);
 
-            var player = PlayerManager.players.Values.FirstOrDefault(p => p.localPlayerNumber >= 0);
-            SpellModificationSystem.ApplyModifiersToGame(Globals.spell_manager, player);
+            // Only load boosted table if we're on default or boosted (not other custom tables like juggernaut)
+            string currentTable = SpellModificationSystem.LoadedTableKey;
+            if (currentTable == "default" || currentTable == "boosted")
+                SpellModificationSystem.Load("boosted");
+            else
+                Plugin.Log.LogWarning($"[Boosted] Not loading boosted table after upgrade because current table is '{currentTable}'");
 
             Plugin.Log.LogInfo($"[Boosted] Applied {(isPositive ? "+" : "")}{change * 100:F0}% to {option.GetDisplayText()}");
         }
@@ -118,10 +121,12 @@ namespace MageKit.Boosted
             if (Plugin.BannedUpgrades.Contains((spellName, attribute)))
                 return false;
 
-            if (SpellModificationSystem.TryGetDefaultValue(spellName, attribute, out float defaultValue) && defaultValue == 0)
+            var defaultTable = SpellModificationSystem.Default();
+            if (defaultTable != null && defaultTable.TryGetModifier(spellName, attribute, out var defaultMod) && defaultMod.Base == 0)
                 return false;
 
-            SpellModificationSystem.TryGetMultiplier(spellName, attribute, out float mult);
+            if (_boostedTable == null || !_boostedTable.TryGetMultiplier(spellName, attribute, out float mult))
+                return false;
 
             if (mult <= 0)
                 return false;
@@ -159,9 +164,9 @@ namespace MageKit.Boosted
             {
                 switch (attribute)
                 {
-                    case "cooldown"when mult <= 0.7f:
-                    case "DAMAGE" when mult >= 2f:
-                    case "POWER" when mult >= 2f:
+                    case "cooldown" when mult <= 0.7f:
+                    case "DAMAGE"   when mult >= 2f:
+                    case "POWER"    when mult >= 2f:
                         return false;
                 }
             }
@@ -209,6 +214,8 @@ namespace MageKit.Boosted
 
         private static void Prefix_SpellObjectInit(object __instance)
         {
+            if (_boostedTable == null) return;
+
             Type t = __instance.GetType();
             var matchedSpell = SpellModificationSystem.GetSpellNameFromTypeName(t.Name);
 
@@ -216,13 +223,13 @@ namespace MageKit.Boosted
 
             var values = new Dictionary<string, float>();
 
-            if (SpellModificationSystem.TryGetModifier(matchedSpell.Value, "DAMAGE", out var damage))
+            if (_boostedTable.TryGetModifier(matchedSpell.Value, "DAMAGE", out var damage))
                 values["DAMAGE"] = damage;
-            if (SpellModificationSystem.TryGetModifier(matchedSpell.Value, "RADIUS", out var radius))
+            if (_boostedTable.TryGetModifier(matchedSpell.Value, "RADIUS", out var radius))
                 values["RADIUS"] = radius;
-            if (SpellModificationSystem.TryGetModifier(matchedSpell.Value, "POWER", out var power))
+            if (_boostedTable.TryGetModifier(matchedSpell.Value, "POWER", out var power))
                 values["POWER"] = power;
-            if (SpellModificationSystem.TryGetModifier(matchedSpell.Value, "Y_POWER", out var yPower))
+            if (_boostedTable.TryGetModifier(matchedSpell.Value, "Y_POWER", out var yPower))
                 values["Y_POWER"] = yPower;
 
             GameModificationHelpers.ApplyFieldValuesToInstance(__instance, values);
@@ -233,7 +240,7 @@ namespace MageKit.Boosted
         {
             public static void Prefix(ref float amount)
             {
-                if (SpellModificationSystem.TryGetModifier(SpellName.FrogOfLife, "HEAL", out var healMod))
+                if (_boostedTable != null && _boostedTable.TryGetModifier(SpellName.FrogOfLife, "HEAL", out var healMod))
                     amount *= healMod.Mult;
             }
 
@@ -274,7 +281,7 @@ namespace MageKit.Boosted
             {
                 if (PlayerManager.round > 0)
                 {
-                    Player player = PlayerManager.players.Values.FirstOrDefault(p => p.localPlayerNumber >= 0);
+                    Player player = SpellModificationSystem.GetLocalPlayer();
                     if (player == null)
                     {
                         Plugin.Log.LogError("[Boosted] No local player found");

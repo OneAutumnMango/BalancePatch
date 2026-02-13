@@ -1,6 +1,7 @@
 using HarmonyLib;
 using MageQuitModFramework.Modding;
 using MageQuitModFramework.Data;
+using MageQuitModFramework.Spells;
 
 namespace MageKit.Boosted
 {
@@ -30,6 +31,7 @@ namespace MageKit.Boosted
         {
             BoostedPatch.ResetSpellModifierTableMults();
             Plugin.CurrentUpgradeOptions.Clear();
+            SpellModificationSystem.ClearTable("boosted");
             harmony.UnpatchSelf();
         }
     }

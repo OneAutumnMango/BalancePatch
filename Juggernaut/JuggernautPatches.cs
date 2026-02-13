@@ -6,6 +6,7 @@ using MageQuitModFramework.Modding;
 using DG.Tweening;
 using System;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace MageKit.Juggernaut
 {
@@ -13,8 +14,12 @@ namespace MageKit.Juggernaut
     public static class JuggernautPatches
     {
         private const byte JuggernautEventCode = 169;
+        private const string JuggernautSaveStateKey = "juggernaut";
         private static int jugPlayerIndex;
         private static bool IAmTheJuggernaut = true;
+        private static bool JuggernautModsApplied = false;
+        private static SpellModifierTable _juggernautTable;
+        private static string _previouslyLoadedTableKey;
 
         public static void Initialize()
         {
@@ -90,10 +95,77 @@ namespace MageKit.Juggernaut
             }
 
             Plugin.Log.LogInfo($"Applying Juggernaut visuals to player {jugPlayerIndex}");
-            ApplyJuggarnautVisuals(wc);
+            ApplyJuggernautVisuals(wc);
+
+
+            if (!IAmTheJuggernaut)
+                return;
+            ApplyJuggernautSpellModifications();
+            SpellModificationSystem.Load("juggernaut");
         }
 
-        private static void ApplyJuggarnautVisuals(WizardController wc)
+        [HarmonyPatch(typeof(BattleManager), nameof(BattleManager.EndBattle))]
+        [HarmonyPostfix]
+        static void OnBattleEnd()
+        {
+            Plugin.Log.LogInfo("Battle ended, reverting Juggernaut spell modifications");
+            RevertJuggernautSpellModifications();
+        }
+
+        private static void ApplyJuggernautSpellModifications()
+        {
+            if (!IAmTheJuggernaut)
+                return;
+
+            if (JuggernautModsApplied)
+            {
+                Plugin.Log.LogWarning("Juggernaut mods already applied this round");
+                return;
+            }
+
+            _previouslyLoadedTableKey = SpellModificationSystem.LoadedTableKey;
+            _juggernautTable = SpellModificationSystem.GetTable(_previouslyLoadedTableKey).Copy();
+
+            string[] buffAttributes     = ["DAMAGE", "RADIUS", "POWER", "Y_POWER", "HEAL", "initialVelocity"];
+            string[] debuffAttributes   = ["cooldown", "windUp", "windDown"];
+
+            foreach (SpellName spellName in Enum.GetValues(typeof(SpellName)))
+            {
+                // 2x multiplier (multiplicative)
+                foreach (var attribute in buffAttributes)
+                {
+                    _juggernautTable.TryMultiplyModifier(spellName, attribute, 2.0f);
+                }
+
+                // 0.5x multiplier (multiplicative)
+                foreach (var attribute in debuffAttributes)
+                {
+                    _juggernautTable.TryMultiplyModifier(spellName, attribute, 0.5f);
+                }
+            }
+
+            SpellModificationSystem.RegisterTable("juggernaut", _juggernautTable);
+            JuggernautModsApplied = true;
+            Plugin.Log.LogInfo("Juggernaut spell modifications applied");
+        }
+
+        private static void RevertJuggernautSpellModifications()
+        {
+            if (!JuggernautModsApplied)
+                return;
+
+            Plugin.Log.LogInfo("Reverting Juggernaut spell modifications");
+
+            SpellModificationSystem.ClearTable("juggernaut");
+            _juggernautTable = null;
+
+            SpellModificationSystem.Load(_previouslyLoadedTableKey);
+
+            JuggernautModsApplied = false;
+            Plugin.Log.LogInfo("Juggernaut spell modifications reverted");
+        }
+
+        private static void ApplyJuggernautVisuals(WizardController wc)
         {
             wc.transform.DOKill(); // prevent stacking if triggered again
 
