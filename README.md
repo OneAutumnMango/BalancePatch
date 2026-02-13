@@ -11,13 +11,27 @@ DO NOT USE THESE MODS FOR ONLINE PLAY WITH RANDOMS. IT CAN CAUSE SOME MAJOR ISSU
 ## How to Install
 
 1. Install [BepinEx 5](https://github.com/BepInEx/BepInEx/releases/tag/v5.4.23.4) into your MageQuit directory.
-2. Run and then open MageQuit to generate BepInEx files.
-3. Download the latest release here.
-4. Extract the contents of the downloaded zip file into your MageQuit directory. (should be like `MageQuit/BepInEx/plugins/MageKit.dll`)
-5. Launch the game.
+1. Run and then open MageQuit to generate BepInEx files.
+1. Download the latest release here.
+1. Extract the contents of the downloaded zip file into your MageQuit directory. (should be like `MageQuit/BepInEx/plugins/MageKit.dll`)
+1. Download https://github.com/OneAutumnMango/MageQuitModFramework and put next to the dll.
+1. Launch the game.
+1. Press F5 to open the MageKit menu and enable the mods you want to use.
 
 BepInEx mirror: https://www.nexusmods.com/magequit/mods/1 <br>
 MageKit mirror: https://www.nexusmods.com/magequit/mods/2
+
+
+## Juggernaut (New Gamemode!)
+
+At the start of each battle, one player will be randomly selected as the Juggernaut. The Juggernaut gets:
+- Greatly increased HP (3x)
+- Increased damage, radius, knockback, and healing of all spells
+- Faster spells
+- Longer animations
+- Increased size and cool glowing colour
+
+This mode can be combined with Balance and other mods.
 
 
 ## How to Use the Randomiser
@@ -41,7 +55,6 @@ MageKit mirror: https://www.nexusmods.com/magequit/mods/2
 To play a new game after having played one already, click `Unload Boosted` then once youre in the picking screen of the next game `Load Boosted`.
 
 This mode is NOT compatible with the Randomiser.
-
 
 ## Changes:
 **MageQuit Gameplay Changes**:
