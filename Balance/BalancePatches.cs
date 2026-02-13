@@ -130,8 +130,7 @@ namespace MageKit.Balance
     {
         static void Prefix(SomAssaultObject __instance)
         {
-            if (ModManager.TryGetModuleManager("MageKit", out ModuleManager moduleManager)
-                && moduleManager.IsModuleLoaded("Boosted")) return;  // skip if boosted (ik this is horrible)
+            if (ModManager.IsModuleLoaded("Boosted")) return;
 
             Traverse.Create(__instance)
                     .Field("RADIUS")
@@ -311,7 +310,7 @@ namespace MageKit.Balance
     {
         static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            return GameModificationHelpers.ReplaceIntConstant(instructions, 20, 30);
+            return GameModificationHelpers.ReplaceIntConstant(instructions, 20, 35);
         }
     }
 
@@ -329,21 +328,21 @@ namespace MageKit.Balance
 			PlayerManager.gameSettings.spellSelectionMode = SpellSelectionMode.TwoRoundSnake;
             PlayerManager.gameSettings.stage = StageName.LessRandom;
             PlayerManager.gameSettings.elements = new ElementInclusionMode[10];
-			// PlayerManager.gameSettings.elements =
-            // [
-            //     ElementInclusionMode.Possible,
-			// 	ElementInclusionMode.Possible,
-			// 	ElementInclusionMode.Possible,
-			// 	ElementInclusionMode.Possible,
-			// 	ElementInclusionMode.Possible,
-			// 	ElementInclusionMode.Possible,
-			// 	ElementInclusionMode.Possible,
-			// 	ElementInclusionMode.Possible,
-			// 	ElementInclusionMode.Possible,
-			// 	ElementInclusionMode.Banned
-			// ];
-            PlayerManager.gameSettings.numberOfRounds = 30;
-            PlayerManager.finalRound = 30;
+			PlayerManager.gameSettings.elements =
+            [
+                ElementInclusionMode.Possible,
+				ElementInclusionMode.Possible,
+				ElementInclusionMode.Possible,
+				ElementInclusionMode.Possible,
+				ElementInclusionMode.Possible,
+				ElementInclusionMode.Possible,
+				ElementInclusionMode.Possible,
+				ElementInclusionMode.Possible,
+				ElementInclusionMode.Possible,
+				ElementInclusionMode.Banned
+			];
+            PlayerManager.gameSettings.numberOfRounds = 35;
+            PlayerManager.finalRound = 35;
 
             AccessTools.Method(typeof(SelectionMenu), "ShowHealthMode")    ?.Invoke(__instance, null);
             AccessTools.Method(typeof(SelectionMenu), "ShowMercyRule")     ?.Invoke(__instance, null);
