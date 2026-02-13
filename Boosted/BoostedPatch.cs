@@ -109,10 +109,10 @@ namespace MageKit.Boosted
 
         public static bool IsUpgradeAllowed(SpellName spellName, string attribute)
         {
-            if (ManualModifierRejections.ContainsKey(spellName) && ManualModifierRejections[spellName].Contains(attribute))
+            if (spellName != SpellName.FrogOfLife && attribute == "HEAL")
                 return false;
 
-            if (spellName != SpellName.FrogOfLife && attribute == "HEAL")
+            if (ManualModifierRejections.ContainsKey(spellName) && ManualModifierRejections[spellName].Contains(attribute))
                 return false;
 
             if (Plugin.BannedUpgrades.Contains((spellName, attribute)))
@@ -123,25 +123,48 @@ namespace MageKit.Boosted
 
             SpellModificationSystem.TryGetMultiplier(spellName, attribute, out float mult);
 
-            if (attribute == "cooldown" && mult <= 0.5f)
+            if (mult <= 0)
                 return false;
+
+            switch (attribute)
+            {
+                case "cooldown" when mult <= 0.6f:
+                    return false;
+            }
 
             if (!Globals.spell_manager.spell_table.TryGetValue(spellName, out Spell spell))
                 return true;
 
-            if (spell.spellButton == SpellButton.Movement && attribute == "RADIUS" && mult >= 2f)
-                return false;
+            if (spell.spellButton == SpellButton.Movement)
+            {
+                switch (attribute)
+                {
+                    case "RADIUS" when mult >= 2f:
+                        return false;
+                }
+            }
 
-            // nothing but primary below
-            if (spell.spellButton != SpellButton.Primary)
-                return true;
+            if (spell.spellButton == SpellButton.Melee)
+            {
+                switch (attribute)
+                {
+                    case "cooldown":
+                    case "RADIUS" when mult >= 2.5f:
+                    case "windUp" when mult <= 0.5f:
+                        return false;
+                }
+            }
 
-            if (attribute == "cooldown" && mult <= 0.7f)
-                return false;
-
-            if ((attribute == "DAMAGE" || attribute == "POWER" || attribute == "initialVelocity") && mult >= 2f)
-                return false;
-
+            if (spell.spellButton == SpellButton.Primary)
+            {
+                switch (attribute)
+                {
+                    case "cooldown"when mult <= 0.7f:
+                    case "DAMAGE" when mult >= 2f:
+                    case "POWER" when mult >= 2f:
+                        return false;
+                }
+            }
             return true;
         }
 
