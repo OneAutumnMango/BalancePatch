@@ -103,7 +103,7 @@ namespace MageKit.Juggernaut
             Plugin.Log.LogInfo($"Juggernaut HP tripled for player {index}: {ws.maxHealth}");
         }
 
-        [HarmonyPatch(typeof(PhysicsBody), nameof(PhysicsBody.rpcAddForceOwner))]
+        [HarmonyPatch(typeof(PhysicsBody), nameof(PhysicsBody.rpcAddForce))]
         [HarmonyPrefix]
         static void ReduceJuggernautKnockbackTaken(ref Vector3 impulse, PhysicsBody __instance)
         {
