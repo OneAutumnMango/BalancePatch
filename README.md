@@ -110,6 +110,17 @@ You get one free ban a round.
 
 This mode can be used with the Balance patch but some things may not work. e.g. Geyser winddown might not update according to this patch.
 
+**Multicast**:
+
+Cast a spell multiple times in a row with one cast. (up to 4)
+
+| Multicasts | Chance |
+| ---------- | ------ |
+| 4          | 15%   |
+| 3          | 15%   |
+| 2          | 45%   |
+| 1          | 25%   |
+
 
 **Debugging**:
 

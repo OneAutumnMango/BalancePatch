@@ -53,10 +53,17 @@ jobs:
           name: BepInEx
           path: BepInEx.zip
 
+      - name: Upload MageKit.dll artifact
+        if: startsWith(github.ref, 'refs/tags/') == false
+        uses: actions/upload-artifact@v4
+        with:
+          name: MageKit.dll
+          path: bin/Release/net472/MageKit.dll
+
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
-          artifacts: "BepInEx.zip"
+          artifacts: "BepInEx.zip,bin/Release/net472/MageKit.dll"
           bodyFile: README.md
