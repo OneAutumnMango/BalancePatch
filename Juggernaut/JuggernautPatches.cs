@@ -103,7 +103,7 @@ namespace MageKit.Juggernaut
             Plugin.Log.LogInfo($"Juggernaut HP tripled for player {index}: {ws.maxHealth}");
         }
 
-        [HarmonyPatch(typeof(PhysicsBody), nameof(PhysicsBody.AddForceOwner))]
+        [HarmonyPatch(typeof(PhysicsBody), nameof(PhysicsBody.rpcAddForceOwner))]
         [HarmonyPrefix]
         static void ReduceJuggernautKnockbackTaken(ref Vector3 impulse, PhysicsBody __instance)
         {
@@ -111,13 +111,8 @@ namespace MageKit.Juggernaut
                 return;
 
             Identity id = __instance.GetComponent<Identity>();
-            if (id != null && PlayerManager.players.ContainsKey(id.owner))
-            {
-                if (id.owner == SpellModificationSystem.GetLocalPlayer().playerNumber)
-                {
-                    impulse *= 0.6f;
-                }
-            }
+            if (id.owner == SpellModificationSystem.GetLocalPlayer().playerNumber)
+                impulse *= 0.6f;
         }
     }
 }
