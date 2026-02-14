@@ -45,6 +45,7 @@ namespace MageKit
             _moduleManager.RegisterModule(new Boosted.BoostedModule());
             _moduleManager.RegisterModule(new Randomiser.RandomiserModule());
             _moduleManager.RegisterModule(new Juggernaut.JuggernautModule());
+            _moduleManager.RegisterModule(new Multicast.MulticastModule());
 
             ModUIRegistry.RegisterMod(
                 modDisplayName,
