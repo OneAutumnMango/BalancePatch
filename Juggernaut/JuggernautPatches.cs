@@ -90,7 +90,7 @@ namespace MageKit.Juggernaut
         [HarmonyPostfix]
         static void IncreaseJuggernautHealth(Vector3 pos, Quaternion rot, int index, int id1)
         {
-            // Only double HP for the Juggernaut
+            // Only increase HP for the Juggernaut
             if (index != jugPlayerIndex)
                 return;
 
@@ -98,9 +98,9 @@ namespace MageKit.Juggernaut
             if (ws == null)
                 return;
 
-            ws.maxHealth *= 3f;
+            ws.maxHealth *= 1 + PlayerManager.players.Count;  // hp*(1+numPlayers)
             ws.health = ws.maxHealth;
-            Plugin.Log.LogInfo($"Juggernaut HP tripled for player {index}: {ws.maxHealth}");
+            Plugin.Log.LogInfo($"Juggernaut HP increased for player {index}: {ws.maxHealth}");
         }
 
         [HarmonyPatch(typeof(PhysicsBody), nameof(PhysicsBody.rpcAddForce))]
@@ -112,7 +112,7 @@ namespace MageKit.Juggernaut
 
             Identity id = __instance.GetComponent<Identity>();
             if (id.owner == SpellModificationSystem.GetLocalPlayer().playerNumber)
-                impulse *= 0.6f;
+                impulse *= 0.25f;
         }
     }
 }

@@ -8,6 +8,7 @@ namespace MageKit.Boosted
     public class BoostedModule : BaseModule
     {
         public override string ModuleName => "Boosted";
+        private static bool _patchesApplied = false;
 
         protected override void OnLoad(Harmony harmony)
         {
@@ -21,10 +22,13 @@ namespace MageKit.Boosted
 
         private void ApplyBoostedPatches(Harmony harmony)
         {
+            if (_patchesApplied)
+                return;
             Plugin.Log.LogInfo("Applying Boosted patches");
             BoostedPatch.PopulateSpellModifierTable();
             BoostedPatch.PatchAll(harmony);
             PatchGroup(harmony, typeof(BoostedPatch));
+            _patchesApplied = true;
         }
 
         protected override void OnUnload(Harmony harmony)
@@ -33,6 +37,7 @@ namespace MageKit.Boosted
             Plugin.CurrentUpgradeOptions.Clear();
             SpellModificationSystem.ClearTable("boosted");
             harmony.UnpatchSelf();
+            _patchesApplied = false;
         }
     }
 }
