@@ -42,7 +42,6 @@ namespace MageKit
 
             _moduleManager = ModManager.RegisterMod(modDisplayName, "com.magequit.magekit");
             _moduleManager.RegisterModule(new Balance.BalanceModule());
-            _moduleManager.RegisterModule(new Debug.DebugModule());
             _moduleManager.RegisterModule(new Boosted.BoostedModule());
             _moduleManager.RegisterModule(new Randomiser.RandomiserModule());
             _moduleManager.RegisterModule(new Juggernaut.JuggernautModule());
