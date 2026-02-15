@@ -17,7 +17,7 @@ namespace MageKit.SpellRain
         private Coroutine _spawnCoroutine;
 
         // Configurable parameters
-        public static float SpawnInterval { get; set; } = 5f;
+        public static float SpawnInterval { get; set; } = .5f;
         public static float MinX { get; set; } = 50f;
         public static float MaxX { get; set; } = 150f;
         public static float MinZ { get; set; } = 50f;

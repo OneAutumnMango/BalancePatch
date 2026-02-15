@@ -17,10 +17,8 @@ namespace MageKit.SpellRain
 
             int owner = id.owner;
 
-            if (!SpellRainSpawner.oneTimeSpells.ContainsKey(owner)) return;
-            if (!SpellRainSpawner.oneTimeSpells[owner].ContainsKey(button)) return;
-
-            OneTimeSpell oneTime = SpellRainSpawner.oneTimeSpells[owner][button];
+            if (!SpellRainSpawner.oneTimeSpells.TryGetValue(owner, out var playerSpells)) return;
+            if (!playerSpells.TryGetValue(button, out var oneTime)) return;
 
             if (!oneTime.used)
             {
@@ -38,7 +36,7 @@ namespace MageKit.SpellRain
 
             int owner = id.owner;
 
-            if (!SpellRainSpawner.oneTimeSpells.ContainsKey(owner)) return;
+            if (!SpellRainSpawner.oneTimeSpells.TryGetValue(owner, out var playerSpells)) return;
 
             var spellStateEnum = GameModificationHelpers.GetPrivateField<int>(__instance, "spellState");
 
@@ -46,7 +44,7 @@ namespace MageKit.SpellRain
             {
                 List<SpellButton> toRemove = [];
 
-                foreach (var kvp in SpellRainSpawner.oneTimeSpells[owner])
+                foreach (var kvp in playerSpells)
                 {
                     if (kvp.Value.used)
                     {
@@ -56,19 +54,23 @@ namespace MageKit.SpellRain
 
                 foreach (SpellButton spellButton in toRemove)
                 {
-                    OneTimeSpell spell = SpellRainSpawner.oneTimeSpells[owner][spellButton];
+                    if (!playerSpells.TryGetValue(spellButton, out var spell))
+                        continue;
 
-                    if (PlayerManager.players[owner].spell_library.ContainsKey(spellButton))
+                    if (PlayerManager.players.TryGetValue(owner, out var player))
                     {
-                        PlayerManager.players[owner].spell_library.Remove(spellButton);
+                        if (player.spell_library.ContainsKey(spellButton))
+                        {
+                            player.spell_library.Remove(spellButton);
+                        }
+
+                        if (player.cooldowns.ContainsKey(spell.spellName))
+                        {
+                            player.cooldowns.Remove(spell.spellName);
+                        }
                     }
 
-                    if (PlayerManager.players[owner].cooldowns.ContainsKey(spell.spellName))
-                    {
-                        PlayerManager.players[owner].cooldowns.Remove(spell.spellName);
-                    }
-
-                    SpellRainSpawner.oneTimeSpells[owner].Remove(spellButton);
+                    playerSpells.Remove(spellButton);
 
                     SpellRainHelper.HideHudButton(spellButton);
 

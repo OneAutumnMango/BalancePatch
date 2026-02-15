@@ -18,39 +18,55 @@ namespace MageKit.SpellRain
 
         private static GameObject GetCrystalPrefab()
         {
+            // Check if cached prefab is still valid (not destroyed)
+            if (crystalPrefab == null)
+            {
+                prefabInitialized = false;
+            }
+
             if (!prefabInitialized)
             {
-                // Try to find an existing CrystalObject in the scene
-                CrystalObject existingCrystal = Object.FindObjectOfType<CrystalObject>();
-                if (existingCrystal != null)
+                GameObject go = GameUtility.Instantiate("Units/Crystal", Vector3.zero, Quaternion.identity, 0);
+                var crystal = go.GetComponent<CrystalObject>();
+                if (crystal != null)
                 {
-                    crystalPrefab = existingCrystal.gameObject;
-                    Plugin.Log.LogInfo("Cached crystal prefab from existing CrystalObject in scene.");
+                    crystal.Init(null, 0, SpellName.Brrage, CrystalObject.CrystalState.Inert, null, false);
+                    crystal.TransitionState(CrystalObject.CrystalState.Preserved);
+
+                    GameObject prefabCopy = Object.Instantiate(go);
+                    prefabCopy.SetActive(false);
+                    Object.DontDestroyOnLoad(prefabCopy);
+
+                    // Remove PhotonView to prevent network conflicts
+                    RemovePhotonComponents(prefabCopy);
+
+                    crystalPrefab = prefabCopy;
+                    Object.Destroy(go); // destroy the original temporary instance
+                    Plugin.Log.LogInfo("Spawned, cloned, and cached a CrystalObject prefab using GameUtility.Instantiate.");
                 }
                 else
                 {
-                    GameObject go = GameUtility.Instantiate("Units/Crystal", Vector3.zero, Quaternion.identity, 0);
-                    var crystal = go.GetComponent<CrystalObject>();
-                    if (crystal != null)
-                    {
-                        crystal.Init(null, 0, SpellName.Brrage, CrystalObject.CrystalState.Inert, null, false);
-                        crystal.TransitionState(CrystalObject.CrystalState.Preserved);
-
-                        GameObject prefabCopy = Object.Instantiate(go);
-                        prefabCopy.SetActive(false);
-                        Object.DontDestroyOnLoad(prefabCopy);
-                        crystalPrefab = prefabCopy;
-                        Object.Destroy(go); // destroy the original temporary instance
-                        Plugin.Log.LogInfo("Spawned, cloned, and cached a CrystalObject prefab using GameUtility.Instantiate.");
-                    }
-                    else
-                    {
-                        Plugin.Log.LogError("Failed to get CrystalObject from instantiated prefab!");
-                    }
+                    Plugin.Log.LogError("Failed to get CrystalObject from instantiated prefab!");
                 }
+
                 prefabInitialized = true;
             }
             return crystalPrefab;
+        }
+
+        private static void RemovePhotonComponents(GameObject obj)
+        {
+            // Remove PhotonView components to avoid network ID conflicts
+            PhotonView[] views = obj.GetComponentsInChildren<PhotonView>(true);
+            foreach (var view in views)
+            {
+                Object.DestroyImmediate(view);
+            }
+
+            if (views.Length > 0)
+            {
+                Plugin.Log.LogInfo($"Removed {views.Length} PhotonView component(s) from crystal.");
+            }
         }
 
         public static GameObject SpawnPickupCrystal(Vector3 position, SpellName spell, SpellButton targetSlot = SpellButton.Secondary)
@@ -63,6 +79,9 @@ namespace MageKit.SpellRain
             }
 
             GameObject newCrystal = Object.Instantiate(prefab, position, Quaternion.identity);
+
+            // Remove PhotonView from instantiated copy (prefab removal is deferred)
+            RemovePhotonComponents(newCrystal);
 
             // make copied spell mesh visible
             newCrystal.SetActive(true);
