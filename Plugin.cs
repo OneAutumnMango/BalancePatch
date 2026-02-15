@@ -1,6 +1,7 @@
 using BepInEx;
 using BepInEx.Logging;
 using MageQuitModFramework.Modding;
+using MageQuitModFramework.Spells;
 using MageQuitModFramework.UI;
 using System.Collections.Generic;
 using UnityEngine;
@@ -67,7 +68,7 @@ namespace MageKit
         {
             if (Input.GetKeyDown(KeyCode.F6))
             {
-                var localPlayer = MageQuitModFramework.Spells.SpellModificationSystem.GetLocalPlayer();
+                var localPlayer = SpellModificationSystem.GetLocalPlayer();
                 if (localPlayer != null)
                     SpellRain.SpellRainSpawner.NetworkSpawnRandomPickupNearPlayer(localPlayer.playerNumber);
             }

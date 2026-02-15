@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using HarmonyLib;
+using MageQuitModFramework.Utilities;
 using UnityEngine;
 
 namespace MageKit.SpellRain
@@ -39,10 +40,9 @@ namespace MageKit.SpellRain
 
             if (!SpellRainSpawner.oneTimeSpells.ContainsKey(owner)) return;
 
-            var spellStateField = AccessTools.Field(typeof(SpellHandler), "spellState");
-            var spellStateEnum = spellStateField.GetValue(__instance);
+            var spellStateEnum = GameModificationHelpers.GetPrivateField<int>(__instance, "spellState");
 
-            if (spellStateEnum.ToString() == "Complete")
+            if (spellStateEnum == 2)  // complete
             {
                 List<SpellButton> toRemove = [];
 
@@ -54,13 +54,13 @@ namespace MageKit.SpellRain
                     }
                 }
 
-                foreach (SpellButton button in toRemove)
+                foreach (SpellButton spellButton in toRemove)
                 {
-                    OneTimeSpell spell = SpellRainSpawner.oneTimeSpells[owner][button];
+                    OneTimeSpell spell = SpellRainSpawner.oneTimeSpells[owner][spellButton];
 
-                    if (PlayerManager.players[owner].spell_library.ContainsKey(button))
+                    if (PlayerManager.players[owner].spell_library.ContainsKey(spellButton))
                     {
-                        PlayerManager.players[owner].spell_library.Remove(button);
+                        PlayerManager.players[owner].spell_library.Remove(spellButton);
                     }
 
                     if (PlayerManager.players[owner].cooldowns.ContainsKey(spell.spellName))
@@ -68,9 +68,11 @@ namespace MageKit.SpellRain
                         PlayerManager.players[owner].cooldowns.Remove(spell.spellName);
                     }
 
-                    SpellRainSpawner.oneTimeSpells[owner].Remove(button);
+                    SpellRainSpawner.oneTimeSpells[owner].Remove(spellButton);
 
-                    Plugin.Log.LogInfo($"Removed one-time spell {spell.spellName} from player {owner} slot {button}");
+                    SpellRainHelper.HideHudButton(spellButton);
+
+                    Plugin.Log.LogInfo($"Removed one-time spell {spell.spellName} from player {owner} slot {spellButton}");
                 }
             }
         }

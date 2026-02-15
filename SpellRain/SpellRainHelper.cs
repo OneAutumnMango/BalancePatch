@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using MageQuitModFramework.Utilities;
 using UnityEngine;
 
 namespace MageKit.SpellRain
@@ -6,7 +7,7 @@ namespace MageKit.SpellRain
     public class SpellRainHelper : MonoBehaviour
     {
         public SpellName spellToGive;
-        public SpellButton targetSlot = SpellButton.Secondary;
+        public SpellButton spellButton = SpellButton.Secondary;
         public string networkId; // Unique ID for network synchronization
         private bool pickedUp = false;
         private SoundPlayer soundPlayer;
@@ -47,30 +48,54 @@ namespace MageKit.SpellRain
                 SpellRainSpawner.oneTimeSpells[pickerOwner] = [];
             }
 
-            SpellRainSpawner.oneTimeSpells[pickerOwner][targetSlot] = new OneTimeSpell
+            SpellRainSpawner.oneTimeSpells[pickerOwner][spellButton] = new OneTimeSpell
             {
                 spellName = spellToGive,
-                button    = targetSlot,
+                button    = spellButton,
                 used      = false
             };
 
             Globals.spell_manager.AddSpellToPlayer(
-                targetSlot,
+                spellButton,
                 spellToGive,
                 pickerOwner
             );
 
-            if (soundPlayer != null)
-            {
-                soundPlayer.PlaySoundInstantiate("event:/sfx/ice/cryogenic-pick-up", 5f);
-            }
+            soundPlayer?.PlaySoundInstantiate("event:/sfx/ice/cryogenic-pick-up", 5f);
 
-            Plugin.Log.LogInfo($"Player {pickerOwner} picked up one-time spell: {spellToGive} in slot {targetSlot}");
+            ShowHudButton(spellButton);
+
+            Plugin.Log.LogInfo($"Player {pickerOwner} picked up one-time spell: {spellToGive} in slot {spellButton}");
 
             // Notify network that this pickup was collected
             SpellRainNetworking.NetworkPickup(networkId, pickerOwner);
 
             Destroy(gameObject, 0.1f);
+        }
+
+        public static void HideHudButton(SpellButton spellButton)
+        {
+            if (SpellHudController.current == null) {
+                Plugin.Log.LogWarning("SpellHudController is null, cannot update HUD");
+                return;
+            }
+
+            var hud = SpellHudController.current.spellHuds[(int)spellButton];
+            GameModificationHelpers.SetPrivateField(hud, "spellButton", SpellButton.None);
+            hud.Hide();
+        }
+
+        public void ShowHudButton(SpellButton spellButton)
+        {
+            if (SpellHudController.current == null) {
+                Plugin.Log.LogWarning("SpellHudController is null, cannot update HUD");
+                return;
+            }
+
+            var hud = SpellHudController.current.spellHuds[(int)spellButton];
+            GameModificationHelpers.SetPrivateField(hud, "spellButton", spellButton);
+            SpellHudController.current.Initialize();
+            hud.Show();
         }
     }
 }

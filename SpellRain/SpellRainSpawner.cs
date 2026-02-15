@@ -95,7 +95,7 @@ namespace MageKit.SpellRain
 
             SpellRainHelper pickup = newCrystal.AddComponent<SpellRainHelper>();
             pickup.spellToGive = spell;
-            pickup.targetSlot  = targetSlot;
+            pickup.spellButton  = targetSlot;
 
             Plugin.Log.LogInfo($"Spawned pickup crystal at {position} with spell: {spell}");
             return newCrystal;
